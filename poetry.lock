@@ -739,7 +739,7 @@ tests = ["pytest", "pytest-cov", "flake8", "black"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "a7d3356caca54df3f26ea95dbdd0c0e05b29cf1d65ea86d9636b7dab6a685c29"
+content-hash = "360572ad7f74e082fb3ad43d23241237d03cd314a97a0378de4bc54e81d4014b"
 
 [metadata.files]
 alabaster = [
