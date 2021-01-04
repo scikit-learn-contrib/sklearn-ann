@@ -2,11 +2,13 @@
 
 |ReadTheDocs|_
 
-.. |ReadTheDocs| image:: https://readthedocs.org/projects/sklearn-template/badge/?version=latest
-.. _ReadTheDocs: https://sklearn-template.readthedocs.io/en/latest/?badge=latest
+.. |ReadTheDocs| image:: https://readthedocs.org/projects/sklearn-ann/badge/?version=latest
+.. _ReadTheDocs: https://sklearn-ann.readthedocs.io/en/latest/?badge=latest
 
 sklearn-ann
 ===========
+
+.. inclusion-marker-do-not-remove
 
 **sklearn-ann** eases integration of approximate nearest neighbours
 libraries such as annoy, nmslib and faiss into your sklearn
