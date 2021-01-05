@@ -99,10 +99,13 @@ def rnn_dbscan_inner(is_core, knns, rev_knns, labels):
 
 
 class RnnDBSCAN(ClusterMixin, BaseEstimator):
-    def __init__(self, n_neighbors=5, *, input_guarantee="none", n_jobs=None):
+    def __init__(
+        self, n_neighbors=5, *, input_guarantee="none", n_jobs=None, keep_knns=False
+    ):
         self.n_neighbors = n_neighbors
         self.input_guarantee = input_guarantee
         self.n_jobs = n_jobs
+        self.keep_knns = keep_knns
 
     def fit(self, X, y=None):
         X = self._validate_data(X, accept_sparse="csr")
@@ -116,7 +119,11 @@ class RnnDBSCAN(ClusterMixin, BaseEstimator):
                 "Expected input_guarantee to be one of 'none', 'kneighbors'"
             )
         import timeit
+
         XT = X.transpose().tocsr(copy=True)
+        if self.keep_knns:
+            self.knns_ = X
+            self.rev_knns = XT
 
         # Initially, all samples are unclassified.
         labels = np.full(X.shape[0], UNCLASSIFIED, dtype=np.int32)
@@ -136,18 +143,16 @@ class RnnDBSCAN(ClusterMixin, BaseEstimator):
         self.fit(X, y=y)
         return self.labels_
 
+    def drop_knns(self):
+        del self.knns_
+        del self.rev_knns_
+
 
 def simple_rnn_dbscan_pipeline(neighbor_transformer, n_neighbors, **kwargs):
     from sklearn.pipeline import make_pipeline
+
     n_jobs = kwargs.get("n_jobs", None)
     return make_pipeline(
-        neighbor_transformer(
-            n_neighbors=n_neighbors,
-            **kwargs,
-        ),
-        RnnDBSCAN(
-            n_neighbors=n_neighbors,
-            input_guarantee="kneighbors",
-            n_jobs=n_jobs
-        ),
+        neighbor_transformer(n_neighbors=n_neighbors, **kwargs,),
+        RnnDBSCAN(n_neighbors=n_neighbors, input_guarantee="kneighbors", n_jobs=n_jobs),
     )
