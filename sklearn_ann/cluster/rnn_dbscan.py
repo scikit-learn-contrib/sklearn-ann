@@ -123,7 +123,7 @@ class RnnDBSCAN(ClusterMixin, BaseEstimator):
         XT = X.transpose().tocsr(copy=True)
         if self.keep_knns:
             self.knns_ = X
-            self.rev_knns = XT
+            self.rev_knns_ = XT
 
         # Initially, all samples are unclassified.
         labels = np.full(X.shape[0], UNCLASSIFIED, dtype=np.int32)
@@ -152,7 +152,8 @@ def simple_rnn_dbscan_pipeline(neighbor_transformer, n_neighbors, **kwargs):
     from sklearn.pipeline import make_pipeline
 
     n_jobs = kwargs.get("n_jobs", None)
+    keep_knns = kwargs.pop("keep_knns", None)
     return make_pipeline(
-        neighbor_transformer(n_neighbors=n_neighbors, **kwargs,),
-        RnnDBSCAN(n_neighbors=n_neighbors, input_guarantee="kneighbors", n_jobs=n_jobs),
+        neighbor_transformer(n_neighbors=n_neighbors, **kwargs),
+        RnnDBSCAN(n_neighbors=n_neighbors, input_guarantee="kneighbors", n_jobs=n_jobs, keep_knns=keep_knns),
     )
