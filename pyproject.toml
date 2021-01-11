@@ -12,7 +12,7 @@ pytest = {version = "^6.2.1", optional = true}
 pytest-cov = {version = "^2.10.1", optional = true}
 sphinx = {version = "^3.4.1", optional = true}
 sphinx-gallery = {version = "^0.8.2", optional = true}
-sphinx-rtd-theme = {version = "^0.5.0", optional = true}
+sphinx_rtd_theme = {version = "^0.5.1", optional = true}
 numpydoc = {version = "^1.1.0", optional = true}
 matplotlib = {version = "^3.3.3", optional = true}
 annoy = {version = "^1.17.0", optional = true}
@@ -21,6 +21,7 @@ flake8 = {version = "^3.8.4", optional = true}
 black = {version = "=19.10b0", optional = true}
 pynndescent = {version = "^0.5.1", optional = true}
 pandas = {version = "^1.2.0", optional = true, python = "^3.7.1"}
+sphinx-issues = {version = "^1.2.0", optional = true}
 
 [tool.poetry.dev-dependencies]
 
@@ -30,7 +31,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.extras]
 tests = ["pytest", "pytest-cov", "flake8", "black"]
-docs = ["sphinx", "sphinx-gallery", "sphinx_rtd_theme", "numpydoc", "matplotlib"]
+docs = ["sphinx", "sphinx-gallery", "sphinx_rtd_theme", "sphinx-issues", "numpydoc", "matplotlib"]
 annoy = ["annoy"]
 faiss = ["faiss-cpu"]
 pynndescent = ["pynndescent"]

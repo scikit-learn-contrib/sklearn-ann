@@ -99,6 +99,39 @@ def rnn_dbscan_inner(is_core, knns, rev_knns, labels):
 
 
 class RnnDBSCAN(ClusterMixin, BaseEstimator):
+    """
+    Implements the RNN-DBSCAN clustering algorithm. 
+
+    Parameters
+    ----------
+    n_neighbors : int
+        The number of neighbors in the kNN-graph (the k in kNN), and the
+        theshold of reverse nearest neighbors for a node to be considered a
+        core node.
+    input_guarantee : "none" | "kneighbors"
+        A guarantee on input matrices. If equal to "kneighbors", the algorithm
+        will assume you are passing in the kNN graph exactly as required, e.g.
+        with n_neighbors. This can be used to pass in a graph produced by one
+        of the implementations of the KNeighborsTransformer interface.
+    n_jobs : int
+        The number of jobs to use. Currently has not effect since no part of
+        the algorithm has been parallelled.
+    keep_knns : bool
+        If true, the kNN and inverse kNN graph will be saved to `knns_` and
+        `rev_knns_` after fitting.
+
+    See Also
+    --------
+    simple_rnn_dbscan_pipeline: Create a pipeline of a KNeighborsTransformer and RnnDBSCAN
+
+    References
+    ----------
+    A. Bryant and K. Cios, "RNN-DBSCAN: A Density-Based Clustering
+    Algorithm Using Reverse Nearest Neighbor Density Estimates," in IEEE
+    Transactions on Knowledge and Data Engineering, vol. 30, no. 6, pp.
+    1109-1121, 1 June 2018, doi: 10.1109/TKDE.2017.2787640.
+    """
+
     def __init__(
         self, n_neighbors=5, *, input_guarantee="none", n_jobs=None, keep_knns=False
     ):
@@ -118,7 +151,6 @@ class RnnDBSCAN(ClusterMixin, BaseEstimator):
             raise ValueError(
                 "Expected input_guarantee to be one of 'none', 'kneighbors'"
             )
-        import timeit
 
         XT = X.transpose().tocsr(copy=True)
         if self.keep_knns:
@@ -148,12 +180,25 @@ class RnnDBSCAN(ClusterMixin, BaseEstimator):
         del self.rev_knns_
 
 
-def simple_rnn_dbscan_pipeline(neighbor_transformer, n_neighbors, **kwargs):
+def simple_rnn_dbscan_pipeline(neighbor_transformer, n_neighbors, n_jobs=None,  keep_knns=None, **kwargs):
+    """
+    Create a simple pipeline comprising a transformer and RnnDBSCAN.
+
+    Parameters
+    ----------
+    neighbor_transformer : class implementing KNeighborsTransformer interface
+    n_neighbors:
+        Passed to neighbor_transformer and RnnDBSCAN
+    n_jobs:
+        Passed to neighbor_transformer and RnnDBSCAN
+    keep_knns:
+        Passed to RnnDBSCAN
+    kwargs:
+        Passed to neighbor_transformer 
+    """
     from sklearn.pipeline import make_pipeline
 
-    n_jobs = kwargs.get("n_jobs", None)
-    keep_knns = kwargs.pop("keep_knns", None)
     return make_pipeline(
-        neighbor_transformer(n_neighbors=n_neighbors, **kwargs),
+        neighbor_transformer(n_neighbors=n_neighbors, n_jobs=n_jobs, **kwargs),
         RnnDBSCAN(n_neighbors=n_neighbors, input_guarantee="kneighbors", n_jobs=n_jobs, keep_knns=keep_knns),
     )

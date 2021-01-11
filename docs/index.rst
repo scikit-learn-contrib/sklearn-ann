@@ -14,6 +14,17 @@ sklearn-ann
   :start-after: inclusion-marker-do-not-remove
 
 
+User Guide
+---------------------
+
+.. toctree::
+   :maxdepth: 2
+
+   background
+   kneighbors
+   clustering
+
+
 Indices and tables
 ==================
 
