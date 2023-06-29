@@ -1,0 +1,49 @@
+name: Run tests
+
+on: [push, workflow_dispatch]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        id: setup_py
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-in-project: true
+
+      - name: Generate requirements.txt
+        run: |
+          poetry export --extras demos --with=dev --without-hashes -o requirements.txt &&
+          sed -i '/^torch$/d' requirements.txt
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.local
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('requirements.txt') }}
+
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: |
+          pip install --user -r requirements.txt &&
+          pip install --user --extra-index-url https://download.pytorch.org/whl/nightly/cpu --pre torch &&
+          pip install --user --no-deps -e .
+
+      - name: Run test suite
+        run: |
+          ~/.local/bin/pytest tests
+
+      - name: Run mypy
+        run: |
+          ~/.local/bin/mypy
