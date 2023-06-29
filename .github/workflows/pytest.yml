@@ -20,30 +20,25 @@ jobs:
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
+          virtualenvs-create: true
           virtualenvs-in-project: true
 
-      - name: Generate requirements.txt
-        run: |
-          poetry export --extras tests --extras docs --extras annoy --extras faiss --extras pynndescent --with=dev --without-hashes -o requirements.txt &&
-          sed -i '/^torch$/d' requirements.txt
       - name: Load cached venv
         id: cached-poetry-dependencies
         uses: actions/cache@v3
         with:
-          path: ~/.local
-          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('requirements.txt') }}
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('poetry.lock') }}
 
-      - name: Install dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+      - name: Poetry install
         run: |
-          pip install --user -r requirements.txt &&
-          pip install --user --extra-index-url https://download.pytorch.org/whl/nightly/cpu --pre torch &&
-          pip install --user --no-deps -e .
+          poetry install --extras tests --extras docs --extras annoy --extras faiss --extras pynndescent
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
 
       - name: Run test suite
         run: |
-          ~/.local/bin/pytest tests
+          .venv/bin/pytest tests
 
       - name: Run mypy
         run: |
-          ~/.local/bin/mypy
+          .venv/bin/mypy
