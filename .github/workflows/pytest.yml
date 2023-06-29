@@ -32,7 +32,7 @@ jobs:
 
       - name: Poetry install
         run: |
-          poetry install --extras tests --extras docs --extras annoy --extras faiss --extras pynndescent
+          poetry install --extras tests --extras docs --extras annlibs
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
 
       - name: Run test suite
