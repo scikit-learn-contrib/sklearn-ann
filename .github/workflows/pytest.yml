@@ -37,8 +37,12 @@ jobs:
 
       - name: Run test suite
         run: |
-          .venv/bin/pytest tests
+          .venv/bin/pytest
 
-      - name: Run mypy
+      - name: Run black
         run: |
-          .venv/bin/mypy
+          .venv/bin/black --check sklearn_ann
+
+      - name: Run flake8
+        run: |
+          .venv/bin/flake8 sklearn_ann
