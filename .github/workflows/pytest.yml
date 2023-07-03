@@ -7,6 +7,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
+    strategy:
+      matrix:
+        dependencies: ['locked', 'newest']
+
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -22,9 +26,15 @@ jobs:
           python-version: '3.10'
           cache: 'poetry'
 
+      - name: Unlock dependencies
+        run: |
+          rm poetry.lock
+          poetry lock
+        if: matrix.dependencies == 'newest'
+
       - name: Poetry install
         run: |
-          poetry lock --check
+          poetry lock --check  # check that lockfile is up to date
           poetry install --with test,dev --extras annlibs
 
       - name: Run test suite
