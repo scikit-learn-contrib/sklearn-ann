@@ -25,7 +25,7 @@ jobs:
       - name: Poetry install
         run: |
           poetry lock --check
-          poetry install --extras tests --extras docs --extras annlibs
+          poetry install --with test,dev --extras annlibs
 
       - name: Run test suite
         run: |
@@ -33,8 +33,8 @@ jobs:
 
       - name: Run black
         run: |
-          poetry run black --check sklearn_ann
+          poetry run black --check .
 
       - name: Run flake8
         run: |
-          poetry run flake8 sklearn_ann
+          poetry run ruff .

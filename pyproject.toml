@@ -9,33 +9,51 @@ license = "BSD"
 python = "<3.13,>=3.9"
 scikit-learn = ">=0.24.0"
 scipy = "^1.11.1"
-pytest = {version = "^6.2.1", optional = true}
-pytest-cov = {version = "^2.10.1", optional = true}
-sphinx = {version = "^3.4.1", optional = true}
-sphinx-gallery = {version = "^0.8.2", optional = true}
-sphinx_rtd_theme = {version = "^0.5.1", optional = true}
-numpydoc = {version = "^1.1.0", optional = true}
-matplotlib = {version = "^3.3.3", optional = true}
 annoy = {version = "^1.17.0", optional = true}
 faiss-cpu = {version = "^1.7.3", optional = true}
-flake8 = {version = "^3.8.4", optional = true}
-black = {version = "=23.3.0", optional = true}
 pynndescent = {version = "^0.5.1", optional = true}
 pandas = {version = "^1.2.0", optional = true, python = "^3.7.1"}
-sphinx-issues = {version = "^1.2.0", optional = true}
 nmslib = {version = "^2.1.1", optional = true}
 
-[tool.poetry.dev-dependencies]
-
-[build-system]
-requires = ["setuptools", "poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
-
 [tool.poetry.extras]
-tests = ["pytest", "pytest-cov", "flake8", "black"]
-docs = ["sphinx", "sphinx-gallery", "sphinx_rtd_theme", "sphinx-issues", "numpydoc", "matplotlib"]
 annoy = ["annoy"]
 faiss = ["faiss-cpu"]
 pynndescent = ["pynndescent"]
 nmslib = ["nmslib"]
 annlibs = ["annoy", "faiss-cpu", "pynndescent", "nmslib"]
+
+[tool.poetry.group.dev]
+optional = true
+[tool.poetry.group.dev.dependencies]
+black = ">=23.3.0"
+ruff = ">=0.0.275"
+
+[tool.poetry.group.test]
+optional = true
+[tool.poetry.group.test.dependencies]
+pytest = ">=6.2.1"
+pytest-cov = ">=2.10.1"
+
+[tool.poetry.group.docs]
+optional = true
+[tool.poetry.group.docs.dependencies]
+sphinx = {version = "^3.4.1", optional = true}
+sphinx-gallery = {version = "^0.8.2", optional = true}
+sphinx-rtd-theme = {version = "^0.5.1", optional = true}
+sphinx-issues = {version = "^1.2.0", optional = true}
+numpydoc = {version = "^1.1.0", optional = true}
+matplotlib = {version = "^3.3.3", optional = true}
+
+[tool.ruff]
+target-version = "py39" # TODO: remove when switching to PEP 621
+select = [
+    "F", # Pyflakes
+    "E", # Pycodestyle errors
+    "W", # Pycodestyle warnings
+]
+[tool.ruff.extend-per-file-ignores]
+"examples/*.py" = ["E402"]
+
+[build-system]
+requires = ["setuptools", "poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
