@@ -1,6 +1,5 @@
 from enum import Enum
 from importlib.util import find_spec
-from typing import Callable
 
 import pytest
 
