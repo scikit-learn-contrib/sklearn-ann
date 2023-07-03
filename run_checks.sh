@@ -1,5 +1,5 @@
 #!/bin/bash
+set -e
 
-poetry run black --check . && \
-    poetry run ruff . && \
-    poetry run pytest
+pre-commit run --all-files
+poetry run pytest
