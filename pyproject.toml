@@ -22,12 +22,6 @@ pynndescent = ["pynndescent"]
 nmslib = ["nmslib"]
 annlibs = ["annoy", "faiss-cpu", "pynndescent", "nmslib"]
 
-[tool.poetry.group.dev]
-optional = true
-[tool.poetry.group.dev.dependencies]
-black = ">=23.3.0"
-ruff = ">=0.0.275"
-
 [tool.poetry.group.test]
 optional = true
 [tool.poetry.group.test.dependencies]
