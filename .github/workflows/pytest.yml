@@ -30,6 +30,7 @@ jobs:
         run: |
           rm poetry.lock
           poetry lock
+          poetry show
         if: matrix.dependencies == 'newest'
 
       - name: Poetry install
