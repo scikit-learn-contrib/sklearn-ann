@@ -24,6 +24,7 @@ jobs:
 
       - name: Poetry install
         run: |
+          poetry lock --check
           poetry install --extras tests --extras docs --extras annlibs
 
       - name: Run test suite
