@@ -124,7 +124,7 @@ class RnnDBSCAN(ClusterMixin, BaseEstimator):
     See Also
     --------
     simple_rnn_dbscan_pipeline:
-    Create a pipeline of a KNeighborsTransformer and RnnDBSCAN
+        Create a pipeline of a KNeighborsTransformer and RnnDBSCAN
 
     References
     ----------
