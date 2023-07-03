@@ -70,6 +70,7 @@ def test_all_estimators(Estimator):
 
 
 def mark_diagonal_0_xfail(est):
+    """Mark flaky tests as xfail(strict=False)."""
     # Should probably postprocess these...
     reasons = {
         PyNNDescentTransformer: "sometimes doesn't return diagonal==0",
@@ -78,7 +79,7 @@ def mark_diagonal_0_xfail(est):
     [val] = est.values
     name = val.__name__ if isinstance(val, type) else val
     if reason := reasons.get(val):
-        return add_mark(est, pytest.mark.xfail(reason=f"{name} {reason}"))
+        return add_mark(est, pytest.mark.xfail(reason=f"{name} {reason}", strict=False))
     return est
 
 

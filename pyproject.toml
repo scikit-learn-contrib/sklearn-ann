@@ -48,6 +48,8 @@ matplotlib = "^3.3.3"
 addopts = [
     "--import-mode=importlib",
 ]
+# Flaky tests should be marked as xfail(strict=False),
+# this will notify us when a test considered broken starts succeeding.
 xfail_strict = true
 
 [tool.ruff]
