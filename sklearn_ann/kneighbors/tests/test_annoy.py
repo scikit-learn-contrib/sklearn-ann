@@ -1,5 +1,5 @@
-import pytest
 import numpy as np
+import pytest
 
 from .utils import assert_row_close, needs
 

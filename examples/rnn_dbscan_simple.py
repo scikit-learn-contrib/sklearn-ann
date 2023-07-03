@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 ===================================
 Demo of RNN-DBSCAN clustering algorithm
@@ -12,12 +11,11 @@ Mostly copypasted from sklearn's DBSCAN example.
 print(__doc__)
 
 import numpy as np
-
-from sklearn_ann.cluster.rnn_dbscan import RnnDBSCAN
 from sklearn import metrics
 from sklearn.datasets import make_blobs
 from sklearn.preprocessing import StandardScaler
 
+from sklearn_ann.cluster.rnn_dbscan import RnnDBSCAN
 
 # #############################################################################
 # Generate sample data

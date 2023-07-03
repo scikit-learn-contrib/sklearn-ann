@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 =======================================================
 Demo of RnnDBSCAN clustering algorithm on large dataset
@@ -11,10 +10,10 @@ print(__doc__)
 
 import numpy as np
 from joblib import Memory
+from sklearn import metrics
+from sklearn.datasets import fetch_openml
 
 from sklearn_ann.cluster.rnn_dbscan import simple_rnn_dbscan_pipeline
-from sklearn.datasets import fetch_openml
-from sklearn import metrics
 
 
 # #############################################################################
