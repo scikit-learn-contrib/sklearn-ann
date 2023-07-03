@@ -1,2 +1,6 @@
+__pycache__/
 docs/_build/
 activate.sh
+
+# IDEs
+.vscode/
