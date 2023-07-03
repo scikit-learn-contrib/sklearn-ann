@@ -28,12 +28,12 @@ jobs:
 
       - name: Run test suite
         run: |
-          .venv/bin/pytest
+          poetry run pytest
 
       - name: Run black
         run: |
-          .venv/bin/black --check sklearn_ann
+          poetry run black --check sklearn_ann
 
       - name: Run flake8
         run: |
-          .venv/bin/flake8 sklearn_ann
+          poetry run flake8 sklearn_ann
