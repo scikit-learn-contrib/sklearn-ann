@@ -19,8 +19,8 @@ jobs:
         id: setup_py
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
-          cache: 'poetry'
+          python-version: "3.10"
+          cache: "poetry"
 
       - name: Poetry install
         run: |
@@ -38,3 +38,10 @@ jobs:
       - name: Run style checks
         run: |
           poetry run ruff .
+
+  check: # TODO: replace with pre-commit.ci
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+      - uses: pre-commit/action@v3.0.0
