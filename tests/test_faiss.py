@@ -1,7 +1,7 @@
-from .utils import assert_row_close, needs
+from sklearn_ann.test_utils import assert_row_close, needs
 
 try:
-    from ..faiss import FAISSTransformer
+    from sklearn_ann.kneighbors.faiss import FAISSTransformer
 except ImportError:
     pass
 

@@ -44,6 +44,14 @@ sphinx-issues = "^1.2.0"
 numpydoc = "^1.1.0"
 matplotlib = "^3.3.3"
 
+[tool.pytest.ini_options]
+addopts = [
+    "--import-mode=importlib",
+]
+# Flaky tests should be marked as xfail(strict=False),
+# this will notify us when a test considered broken starts succeeding.
+xfail_strict = true
+
 [tool.ruff]
 # TODO: remove `target-version` when switching to PEP 621
 target-version = "py39"
@@ -63,6 +71,8 @@ ignore = [
 ]
 [tool.ruff.per-file-ignores]
 "examples/*.py" = ["E402"]
+[tool.ruff.isort]
+known-first-party = ["sklearn_ann"]
 
 [build-system]
 requires = ["setuptools", "poetry-core>=1.0.0"]

@@ -1,8 +1,6 @@
 from enum import Enum
 from importlib.util import find_spec
 
-import pytest
-
 
 def assert_row_close(sp_mat, actual_pdist, row=42, thresh=0.01):
     row_mat = sp_mat.getrow(row)
@@ -30,6 +28,8 @@ class needs(Enum):
     pynndescent = ("pynndescent",)
 
     def __call__(self, fn=None):
+        import pytest
+
         what = (
             f"package {self.value[0]}"
             if len(self.value) == 1

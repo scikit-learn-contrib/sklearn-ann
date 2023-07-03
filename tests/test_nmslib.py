@@ -1,7 +1,7 @@
-from .utils import assert_row_close, needs
+from sklearn_ann.test_utils import assert_row_close, needs
 
 try:
-    from ..nmslib import NMSlibTransformer
+    from sklearn_ann.kneighbors.nmslib import NMSlibTransformer
 except ImportError:
     pass
 
