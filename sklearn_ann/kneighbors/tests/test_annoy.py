@@ -1,9 +1,15 @@
 import pytest
-from ..annoy import AnnoyTransformer
-from .utils import assert_row_close
 import numpy as np
 
+from .utils import assert_row_close, needs
 
+try:
+    from ..annoy import AnnoyTransformer
+except ImportError:
+    pass
+
+
+@needs.annoy
 def test_euclidean(random_small, random_small_pdists):
     trans = AnnoyTransformer(metric="euclidean")
     mat = trans.fit_transform(random_small)
@@ -11,6 +17,7 @@ def test_euclidean(random_small, random_small_pdists):
     assert_row_close(mat, euclidean_dist)
 
 
+@needs.annoy
 @pytest.mark.xfail(reason="not sure why this isn't working")
 def test_angular(random_small, random_small_pdists):
     trans = AnnoyTransformer(metric="angular")

@@ -1,7 +1,12 @@
-from ..nmslib import NMSlibTransformer
-from .utils import assert_row_close
+from .utils import assert_row_close, needs
+
+try:
+    from ..nmslib import NMSlibTransformer
+except ImportError:
+    pass
 
 
+@needs.nmslib
 def test_euclidean(random_small, random_small_pdists):
     trans = NMSlibTransformer(metric="euclidean")
     mat = trans.fit_transform(random_small)
@@ -9,6 +14,7 @@ def test_euclidean(random_small, random_small_pdists):
     assert_row_close(mat, euclidean_dist)
 
 
+@needs.nmslib
 def test_cosine(random_small, random_small_pdists):
     trans = NMSlibTransformer(metric="cosine")
     mat = trans.fit_transform(random_small)

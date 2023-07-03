@@ -3,29 +3,47 @@ import pytest
 import numpy as np
 from sklearn.utils.estimator_checks import check_estimator
 
-from sklearn_ann.kneighbors.annoy import AnnoyTransformer
-from sklearn_ann.kneighbors.faiss import FAISSTransformer
-from sklearn_ann.kneighbors.nmslib import NMSlibTransformer
-from sklearn_ann.kneighbors.pynndescent import PyNNDescentTransformer
+from .utils import needs
+
+try:
+    from sklearn_ann.kneighbors.annoy import AnnoyTransformer
+except ImportError:
+    AnnoyTransformer = "AnnoyTransformer"
+try:
+    from sklearn_ann.kneighbors.faiss import FAISSTransformer
+except ImportError:
+    FAISSTransformer = "FAISSTransformer"
+try:
+    from sklearn_ann.kneighbors.nmslib import NMSlibTransformer
+except ImportError:
+    NMSlibTransformer = "NMSlibTransformer"
+try:
+    from sklearn_ann.kneighbors.pynndescent import PyNNDescentTransformer
+except ImportError:
+    PyNNDescentTransformer = "PyNNDescentTransformer"
 from sklearn_ann.kneighbors.sklearn import BallTreeTransformer, KDTreeTransformer
 
 
 ESTIMATORS = [
-    AnnoyTransformer,
-    FAISSTransformer,
-    NMSlibTransformer,
-    PyNNDescentTransformer,
-    BallTreeTransformer,
-    KDTreeTransformer,
+    pytest.param(AnnoyTransformer, marks=[needs.annoy()]),
+    pytest.param(FAISSTransformer, marks=[needs.faiss()]),
+    pytest.param(NMSlibTransformer, marks=[needs.nmslib()]),
+    pytest.param(PyNNDescentTransformer, marks=[needs.pynndescent()]),
+    pytest.param(BallTreeTransformer),
+    pytest.param(KDTreeTransformer),
 ]
+
+
+def add_mark(param, mark):
+    return pytest.param(*param.values, marks=[*param.marks, mark])
 
 
 @pytest.mark.parametrize(
     "Estimator",
     [
-        pytest.param(
+        add_mark(
             est,
-            marks=pytest.mark.xfail(
+            pytest.mark.xfail(
                 reason="cannot deal with all dtypes (problem is upsteam)"
             ),
         )
@@ -49,17 +67,17 @@ def test_all_estimators(Estimator):
 
 def mark_diagonal_0_xfail(est):
     # Should probably postprocess these...
-    if est is PyNNDescentTransformer:
-        return pytest.param(
+    if est.values[0] is PyNNDescentTransformer:
+        return add_mark(
             est,
-            marks=pytest.mark.xfail(
+            pytest.mark.xfail(
                 reason="PyNNDescentTransformer sometimes doesn't return diagonal==0"
             ),
         )
-    elif est is FAISSTransformer:
-        return pytest.param(
+    elif est.values[0] is FAISSTransformer:
+        return add_mark(
             est,
-            marks=pytest.mark.xfail(
+            pytest.mark.xfail(
                 reason="FAISSTransformer sometimes returns diagonal==eps where eps is small"
             ),
         )
