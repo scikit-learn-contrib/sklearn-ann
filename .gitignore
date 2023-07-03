@@ -1,7 +1,11 @@
+# Caches
 __pycache__/
 /*cache/
-docs/_build/
-activate.sh
 
-# IDEs
+# Build artifacts
+/dist/
+/docs/_build/
+
+# IDEs and dev files
+activate.sh
 .vscode/
