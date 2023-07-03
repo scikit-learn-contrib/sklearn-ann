@@ -75,10 +75,11 @@ def mark_diagonal_0_xfail(est):
         PyNNDescentTransformer: "sometimes doesn't return diagonal==0",
         FAISSTransformer: "sometimes returns diagonal==eps where eps is small",
     }
-    reason = reasons.get(est.values[0])
-    if not reason:
-        return est
-    return add_mark(est, pytest.mark.xfail(reason=f"{est.values[0].__name__} {reason}"))
+    [val] = est.values
+    name = val.__name__ if isinstance(val, type) else val
+    if reason := reasons.get(val):
+        return add_mark(est, pytest.mark.xfail(reason=f"{name} {reason}"))
+    return est
 
 
 @pytest.mark.parametrize(

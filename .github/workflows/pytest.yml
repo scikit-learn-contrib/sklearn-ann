@@ -24,7 +24,7 @@ jobs:
 
       - name: Poetry install
         run: |
-          poetry lock --check
+          poetry lock --check  # check that lockfile is up to date
           poetry install --with test,dev --extras annlibs
 
       - name: Run test suite
