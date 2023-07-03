@@ -1,6 +1,5 @@
-import pytest
-
 import numpy as np
+import pytest
 from sklearn.utils.estimator_checks import check_estimator
 
 from .utils import needs
@@ -22,7 +21,6 @@ try:
 except ImportError:
     PyNNDescentTransformer = "PyNNDescentTransformer"
 from sklearn_ann.kneighbors.sklearn import BallTreeTransformer, KDTreeTransformer
-
 
 ESTIMATORS = [
     pytest.param(AnnoyTransformer, marks=[needs.annoy()]),
@@ -58,38 +56,39 @@ def test_all_estimators(Estimator):
 
 # The following critera are from:
 #   https://scikit-learn.org/stable/modules/neighbors.html#nearest-neighbors-transformer
-# * only explicitly store nearest neighborhoods of each sample with respect to the training data. This should include those at 0 distance from a query point, including the matrix diagonal when computing the nearest neighborhoods between the training data and itself.
-# * each row’s data should store the distance in increasing order (optional. Unsorted data will be stable-sorted, adding a computational overhead).
+# * only explicitly store nearest neighborhoods of each sample with respect to the
+#   training data. This should include those at 0 distance from a query point,
+#   including the matrix diagonal when computing the nearest neighborhoods between the
+#   training data and itself.
+# * each row’s data should store the distance in increasing order
+#   (optional. Unsorted data will be stable-sorted, adding a computational overhead).
 # * all values in data should be non-negative.
 # * there should be no duplicate indices in any row (see https://github.com/scipy/scipy/issues/5807).
-# * if the algorithm being passed the precomputed matrix uses k nearest neighbors (as opposed to radius neighborhood), at least k neighbors must be stored in each row (or k+1, as explained in the following note).
+# * if the algorithm being passed the precomputed matrix uses k nearest neighbors
+#   (as opposed to radius neighborhood), at least k neighbors must be stored in each row
+#   (or k+1, as explained in the following note).
 
 
 def mark_diagonal_0_xfail(est):
     # Should probably postprocess these...
-    if est.values[0] is PyNNDescentTransformer:
-        return add_mark(
-            est,
-            pytest.mark.xfail(
-                reason="PyNNDescentTransformer sometimes doesn't return diagonal==0"
-            ),
-        )
-    elif est.values[0] is FAISSTransformer:
-        return add_mark(
-            est,
-            pytest.mark.xfail(
-                reason="FAISSTransformer sometimes returns diagonal==eps where eps is small"
-            ),
-        )
-    else:
+    reasons = {
+        PyNNDescentTransformer: "sometimes doesn't return diagonal==0",
+        FAISSTransformer: "sometimes returns diagonal==eps where eps is small",
+    }
+    reason = reasons.get(est.values[0])
+    if not reason:
         return est
+    return add_mark(est, pytest.mark.xfail(reason=f"{est.values[0].__name__} {reason}"))
 
 
 @pytest.mark.parametrize(
     "Estimator", [mark_diagonal_0_xfail(est) for est in ESTIMATORS]
 )
 def test_all_return_diagonal_0(random_small, Estimator):
-    # * only explicitly store nearest neighborhoods of each sample with respect to the training data. This should include those at 0 distance from a query point, including the matrix diagonal when computing the nearest neighborhoods between the training data and itself.
+    # * only explicitly store nearest neighborhoods of each sample with respect to the
+    #   training data. This should include those at 0 distance from a query point,
+    #   including the matrix diagonal when computing the nearest neighborhoods
+    #   between the training data and itself.
 
     # Check: do we alway get an "extra" neighbour (diagonal/self)
     est = Estimator(n_neighbors=3)

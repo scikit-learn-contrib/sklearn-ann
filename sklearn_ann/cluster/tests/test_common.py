@@ -1,6 +1,6 @@
 import pytest
-
 from sklearn.utils.estimator_checks import check_estimator
+
 from sklearn_ann.cluster.rnn_dbscan import RnnDBSCAN
 
 ESTIMATORS = [RnnDBSCAN]

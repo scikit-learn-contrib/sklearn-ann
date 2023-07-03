@@ -1,14 +1,15 @@
 from __future__ import annotations
 
-import faiss
 import math
-from joblib import cpu_count
-from faiss import normalize_L2
-from sklearn.base import TransformerMixin, BaseEstimator
-from scipy.sparse import csr_matrix
-import numpy as np
-from ..utils import postprocess_knn_csr, TransformerChecksMixin
 
+import faiss
+import numpy as np
+from faiss import normalize_L2
+from joblib import cpu_count
+from scipy.sparse import csr_matrix
+from sklearn.base import BaseEstimator, TransformerMixin
+
+from ..utils import TransformerChecksMixin, postprocess_knn_csr
 
 L2_INFO = {"metric": faiss.METRIC_L2, "sqrt": True}
 

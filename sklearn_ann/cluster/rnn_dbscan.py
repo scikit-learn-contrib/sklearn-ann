@@ -1,9 +1,10 @@
+from collections import deque
+
+import numpy as np
 from sklearn.base import BaseEstimator, ClusterMixin
 from sklearn.neighbors import KNeighborsTransformer
-from collections import deque
-from ..utils import get_sparse_row
-import numpy as np
 
+from ..utils import get_sparse_row
 
 UNCLASSIFIED = -2
 NOISE = -1
@@ -122,7 +123,8 @@ class RnnDBSCAN(ClusterMixin, BaseEstimator):
 
     See Also
     --------
-    simple_rnn_dbscan_pipeline: Create a pipeline of a KNeighborsTransformer and RnnDBSCAN
+    simple_rnn_dbscan_pipeline:
+    Create a pipeline of a KNeighborsTransformer and RnnDBSCAN
 
     References
     ----------

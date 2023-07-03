@@ -1,7 +1,8 @@
 import annoy
-from sklearn.base import TransformerMixin, BaseEstimator
-from scipy.sparse import csr_matrix
 import numpy as np
+from scipy.sparse import csr_matrix
+from sklearn.base import BaseEstimator, TransformerMixin
+
 from ..utils import TransformerChecksMixin
 
 
