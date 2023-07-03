@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from sklearn.utils.estimator_checks import check_estimator
 
-from .utils import needs
+from sklearn_ann.test_utils import needs
 
 try:
     from sklearn_ann.kneighbors.annoy import AnnoyTransformer

@@ -1,10 +1,10 @@
 import numpy as np
 import pytest
 
-from .utils import assert_row_close, needs
+from sklearn_ann.test_utils import assert_row_close, needs
 
 try:
-    from ..annoy import AnnoyTransformer
+    from sklearn_ann.kneighbors.annoy import AnnoyTransformer
 except ImportError:
     pass
 
