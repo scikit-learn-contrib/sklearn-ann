@@ -6,14 +6,14 @@ authors = ["Frankie Robertson <frankie@robertson.name>"]
 license = "BSD"
 
 [tool.poetry.dependencies]
-python = "<3.13,>=3.9"
+python = ">=3.9,<3.13"  # enforced by scipy
 scikit-learn = ">=0.24.0"
-scipy = "^1.11.1"
-annoy = {version = "^1.17.0", optional = true}
-faiss-cpu = {version = "^1.7.3", optional = true}
-pynndescent = {version = "^0.5.1", optional = true}
-pandas = {version = "^1.2.0", optional = true, python = "^3.7.1"}
-nmslib = {version = "^2.1.1", optional = true}
+scipy = ">=1.11.1"
+annoy = {version = ">=1.17.0", optional = true}
+faiss-cpu = {version = ">=1.7.3", optional = true}
+pynndescent = {version = ">=0.5.1", optional = true}
+pandas = {version = ">=1.2.0", optional = true}
+nmslib = {version = ">=2.1.1", optional = true}
 
 [tool.poetry.extras]
 annoy = ["annoy"]
