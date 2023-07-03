@@ -35,7 +35,7 @@ ESTIMATORS = [
 
 
 def add_mark(param, mark):
-    return pytest.param(*param.values, marks=[*param.marks, mark])
+    return pytest.param(*param.values, marks=[*param.marks, mark], id=param.id)
 
 
 @pytest.mark.parametrize(
@@ -47,7 +47,7 @@ def add_mark(param, mark):
                 reason="cannot deal with all dtypes (problem is upsteam)"
             ),
         )
-        if est is PyNNDescentTransformer
+        if est.values[0] is PyNNDescentTransformer
         else est
         for est in ESTIMATORS
     ],
