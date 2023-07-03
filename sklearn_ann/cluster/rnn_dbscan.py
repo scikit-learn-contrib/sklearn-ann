@@ -100,7 +100,7 @@ def rnn_dbscan_inner(is_core, knns, rev_knns, labels):
 
 class RnnDBSCAN(ClusterMixin, BaseEstimator):
     """
-    Implements the RNN-DBSCAN clustering algorithm. 
+    Implements the RNN-DBSCAN clustering algorithm.
 
     Parameters
     ----------
@@ -180,7 +180,9 @@ class RnnDBSCAN(ClusterMixin, BaseEstimator):
         del self.rev_knns_
 
 
-def simple_rnn_dbscan_pipeline(neighbor_transformer, n_neighbors, n_jobs=None,  keep_knns=None, **kwargs):
+def simple_rnn_dbscan_pipeline(
+    neighbor_transformer, n_neighbors, n_jobs=None, keep_knns=None, **kwargs
+):
     """
     Create a simple pipeline comprising a transformer and RnnDBSCAN.
 
@@ -194,11 +196,16 @@ def simple_rnn_dbscan_pipeline(neighbor_transformer, n_neighbors, n_jobs=None,  
     keep_knns:
         Passed to RnnDBSCAN
     kwargs:
-        Passed to neighbor_transformer 
+        Passed to neighbor_transformer
     """
     from sklearn.pipeline import make_pipeline
 
     return make_pipeline(
         neighbor_transformer(n_neighbors=n_neighbors, n_jobs=n_jobs, **kwargs),
-        RnnDBSCAN(n_neighbors=n_neighbors, input_guarantee="kneighbors", n_jobs=n_jobs, keep_knns=keep_knns),
+        RnnDBSCAN(
+            n_neighbors=n_neighbors,
+            input_guarantee="kneighbors",
+            n_jobs=n_jobs,
+            keep_knns=keep_knns,
+        ),
     )

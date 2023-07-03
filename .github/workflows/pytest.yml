@@ -11,38 +11,30 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: Install Poetry
+        run: |
+          pipx install poetry
+
       - name: Setup Python
         id: setup_py
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@v3
-        with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('poetry.lock') }}
+          cache: 'poetry'
 
       - name: Poetry install
         run: |
+          poetry lock --check
           poetry install --extras tests --extras docs --extras annlibs
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
 
       - name: Run test suite
         run: |
-          .venv/bin/pytest
+          poetry run pytest -v --color=yes
 
       - name: Run black
         run: |
-          .venv/bin/black --check sklearn_ann
+          poetry run black --check sklearn_ann
 
       - name: Run flake8
         run: |
-          .venv/bin/flake8 sklearn_ann
+          poetry run flake8 sklearn_ann

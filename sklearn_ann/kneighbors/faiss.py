@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import faiss
 import math
 from joblib import cpu_count
@@ -29,7 +31,7 @@ METRIC_MAP = {
 }
 
 
-def mk_faiss_index(feats, inner_metric, index_key="", nprobe=128):
+def mk_faiss_index(feats, inner_metric, index_key="", nprobe=128) -> faiss.Index:
     size, dim = feats.shape
     if not index_key:
         if inner_metric == faiss.METRIC_INNER_PRODUCT:
@@ -66,9 +68,8 @@ class FAISSTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator):
         n_probe=128,
         n_jobs=-1,
         include_fwd=True,
-        include_rev=False
+        include_rev=False,
     ):
-
         self.n_neighbors = n_neighbors
         self.metric = metric
         self.index_key = index_key
@@ -109,7 +110,9 @@ class FAISSTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator):
         if X is None:
             sims, nbrs = self.faiss_.search(
                 np.reshape(
-                    faiss.vector_to_array(self.faiss_.xb),
+                    faiss.rev_swig_ptr(
+                        self.faiss_.get_xb(), self.faiss_.ntotal * self.faiss_.d
+                    ),
                     (self.faiss_.ntotal, self.faiss_.d),
                 ),
                 k=n_neighbors,
