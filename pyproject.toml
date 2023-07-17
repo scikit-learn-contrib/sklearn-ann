@@ -76,7 +76,7 @@ known-first-party = ["sklearn_ann"]
 features = [
   "tests",
   "docs",
-  "annlibs"
+  "annlibs",
 ]
 
 [tool.hatch.envs.default.scripts]

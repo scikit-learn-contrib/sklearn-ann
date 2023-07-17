@@ -11,25 +11,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Install Poetry
-        run: |
-          pipx install poetry
-
       - name: Setup Python
-        id: setup_py
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
-          cache: poetry
+          cache: pip
 
-      - name: Poetry install
-        run: |
-          poetry lock --check  # check that lockfile is up to date
-          poetry install --with test --extras annlibs
+      - name: Install project and dependencies
+        run: pip install .[annlibs,tests]
 
       - name: Run test suite
-        run: |
-          poetry run pytest -v --color=yes
+        run: pytest -v --color=yes
 
   check: # TODO: replace with pre-commit.ci
     runs-on: ubuntu-latest
