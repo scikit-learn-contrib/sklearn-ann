@@ -3,7 +3,8 @@ name = "sklearn-ann"
 version = "0.1.0"
 description = "Various integrations for ANN (Approximate Nearest Neighbours) libraries into scikit-learn."
 authors = [
-    { name = "Frankie Robertson", email = "frankie@robertson.name" }
+    { name = "Frankie Robertson", email = "frankie@robertson.name" },
+    { name = "Philipp Angerer", email = "phil.angerer@gmail.com" }
 ]
 license = "BSD-3-Clause"
 requires-python = "<3.13,>=3.9"  # enforced by scipy
