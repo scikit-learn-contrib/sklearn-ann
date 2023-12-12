@@ -1,6 +1,7 @@
 # Caches
 __pycache__/
 /*cache/
+/node_modules/
 
 # Build artifacts
 /dist/
