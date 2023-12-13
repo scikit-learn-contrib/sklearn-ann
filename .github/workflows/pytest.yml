@@ -33,4 +33,4 @@ jobs:
           cache: pip
       - uses: pre-commit/action@v3.0.0
         env:
-          SKIP: no-commit-to-branch  # only for local development
+          SKIP: no-commit-to-branch # only for local development
