@@ -4,10 +4,14 @@ build:
   os: ubuntu-22.04
   tools:
     python: "3.11"
-  jobs:
-    post_install:
-      - pip install hatch
-      - pip install .[docs,annlibs]
+
+python:
+  install:
+    - method: pip
+      path: .
+      extra_requirements:
+        - doc
+        - annlibs
 
 sphinx:
   configuration: docs/conf.py
