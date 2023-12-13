@@ -4,13 +4,14 @@
 # list see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
+import os
+
 # -- Path setup --------------------------------------------------------------
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
@@ -31,8 +32,9 @@ extensions = [
     "sphinx.ext.autosummary",
     "sphinx.ext.napoleon",
     "scanpydoc.definition_list_typed_field",
+    "scanpydoc.rtd_github_links",
     "sphinx_issues",
-    "sphinx.ext.viewcode",
+    "sphinx.ext.linkcode",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -55,5 +57,10 @@ autodoc_default_options = {
 # a list of builtin themes.
 #
 html_theme = "sphinx_book_theme"
+html_theme_options = dict(
+    repository_url="https://github.com/frankier/sklearn-ann",
+    repository_branch=os.environ.get("READTHEDOCS_GIT_IDENTIFIER", "main"),
+)
+rtd_links_prefix = "src"
 
 autodoc_mock_imports = ["annoy", "faiss", "pynndescent", "nmslib"]
