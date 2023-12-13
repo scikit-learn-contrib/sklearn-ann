@@ -4,17 +4,16 @@
 # list see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
+import os
+
 # -- Path setup --------------------------------------------------------------
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
-
-import sphinx_rtd_theme
 
 # -- Project information -----------------------------------------------------
 
@@ -31,9 +30,11 @@ author = "Frankie Robertson"
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
-    "numpydoc",
+    "sphinx.ext.napoleon",
+    "scanpydoc.definition_list_typed_field",
+    "scanpydoc.rtd_github_links",
     "sphinx_issues",
-    "sphinx.ext.viewcode",
+    "sphinx.ext.linkcode",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -45,6 +46,9 @@ templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 autosummary_generate = True
+autodoc_default_options = {
+    "undoc-members": True,
+}
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -52,12 +56,11 @@ autosummary_generate = True
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "sphinx_rtd_theme"
-
-# Add any paths that contain custom static files (such as style sheets) here,
-# relative to this directory. They are copied after the builtin static files,
-# so a file named "default.css" will overwrite the builtin "default.css".
-# html_static_path = ["_static"]
-html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+html_theme = "sphinx_book_theme"
+html_theme_options = dict(
+    repository_url="https://github.com/frankier/sklearn-ann",
+    repository_branch=os.environ.get("READTHEDOCS_GIT_IDENTIFIER", "main"),
+)
+rtd_links_prefix = "src"
 
 autodoc_mock_imports = ["annoy", "faiss", "pynndescent", "nmslib"]

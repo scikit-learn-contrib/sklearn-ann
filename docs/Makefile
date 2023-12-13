@@ -4,9 +4,9 @@
 # You can set these variables from the command line, and also
 # from the environment for the first two.
 SPHINXOPTS    ?=
-SPHINXBUILD   ?= poetry run sphinx-build
-SOURCEDIR     = .
-BUILDDIR      = _build
+SPHINXBUILD   ?= hatch run sphinx-build
+SOURCEDIR     = $(CURDIR)
+BUILDDIR      = $(CURDIR)/_build
 
 # Put it first so that "make" without argument is like "make help".
 help:

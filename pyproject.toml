@@ -19,12 +19,13 @@ tests = [
     "pytest-cov>=2.10.1",
 ]
 docs = [
-    "sphinx>=4.2.0",
+    "sphinx>=7",
     "sphinx-gallery>=0.8.2",
-    "sphinx-rtd-theme>=0.5.1",
+    "sphinx-book-theme>=1.1.0rc1",
     "sphinx-issues>=1.2.0",
     "numpydoc>=1.1.0",
-    "matplotlib>=3.3.3"
+    "matplotlib>=3.3.3",
+    "scanpydoc",
 ]
 annoy = [
     "annoy>=1.17.0,<2.0.0",
@@ -81,6 +82,7 @@ features = [
 
 [tool.hatch.envs.default.scripts]
 test = "pytest {args:tests}"
+build-docs = "sphinx-build -M html docs docs/_build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/sklearn_ann"]

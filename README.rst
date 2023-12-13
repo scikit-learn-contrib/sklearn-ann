@@ -35,17 +35,13 @@ perform competitively in high dimensional spaces.
 Development
 ===========
 
-This project is managed using Poetry_ and pre-commit_.
-To get started, run ``pre-commit install`` once and ``poetry install ...``
-whenever dependencies have changed. E.g. @flying-sheep runs::
-
-    poetry install --with=test --extras=annlibs
-
-This installs all optional (dev) dependencies except for those to build the docs.
-pre-commit_ comes into play on every `git commit` after installation.
+This project is managed using Hatch_ and pre-commit_. To get started, run ``pre-commit
+install`` and ``hatch env create``. Run all commands using ``hatch run python
+<command>`` which will ensure the environment is kept up to date. pre-commit_ comes into
+play on every `git commit` after installation.
 
 Consult ``pyproject.toml`` for which dependency groups and extras exist,
-and the poetry help or user guide for more info on what they are.
+and the Hatch help or user guide for more info on what they are.
 
-.. _poetry: https://python-poetry.org/
+.. _Hatch: https://hatch.pypa.io/
 .. _pre-commit: https://pre-commit.com/
