@@ -1,12 +1,12 @@
 [project]
 name = "sklearn-ann"
-version = "0.1.0"
 description = "Various integrations for ANN (Approximate Nearest Neighbours) libraries into scikit-learn."
 authors = [
     { name = "Frankie Robertson", email = "frankie@robertson.name" },
     { name = "Philipp Angerer", email = "phil.angerer@gmail.com" }
 ]
 license = "BSD-3-Clause"
+dynamic = ["version"]
 requires-python = "<3.13,>=3.9"  # enforced by scipy
 dependencies = [
     "scikit-learn>=0.24.0",
@@ -42,6 +42,9 @@ nmslib = [
 annlibs = [
     "sklearn-ann[annoy,faiss,pynndescent,nmslib]",
 ]
+
+[tool.hatch.version]
+source = "vcs"
 
 [tool.pytest.ini_options]
 addopts = [
@@ -88,5 +91,5 @@ build-docs = "sphinx-build -M html docs docs/_build"
 packages = ["src/sklearn_ann"]
 
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
