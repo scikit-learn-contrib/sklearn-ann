@@ -61,7 +61,6 @@ class AnnoyTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator):
             distances **= 2
 
         indptr = np.arange(0, n_samples_transform * n_neighbors + 1, n_neighbors)
-        print("csr", distances.ravel(), indices.ravel(), indptr)
         kneighbors_graph = csr_matrix(
             (distances.ravel(), indices.ravel(), indptr),
             shape=(n_samples_transform, self.n_samples_fit_),
