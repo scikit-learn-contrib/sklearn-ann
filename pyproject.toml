@@ -5,6 +5,7 @@ authors = [
     { name = "Frankie Robertson", email = "frankie@robertson.name" },
     { name = "Philipp Angerer", email = "phil.angerer@gmail.com" }
 ]
+readme = "README.rst"
 license = "BSD-3-Clause"
 dynamic = ["version"]
 requires-python = "<3.13,>=3.9"  # enforced by scipy
