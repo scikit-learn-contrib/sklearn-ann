@@ -22,6 +22,21 @@ pipelines. It consists of:
 * RNN-DBSCAN: a variant of DBSCAN based on reverse nearest
   neighbours.
 
+Installation
+============
+
+To install the latest release from PyPI, run:
+
+.. code-block:: bash
+
+    pip install sklearn-ann
+
+To install the latest development version from GitHub, run:
+
+.. code-block:: bash
+
+    pip install git+https://github.com/scikit-learn-contrib/sklearn-ann.git#egg=sklearn-ann
+
 Why? When do I want this?
 =========================
 
