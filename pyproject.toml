@@ -55,7 +55,7 @@ addopts = [
 # this will notify us when a test considered broken starts succeeding.
 xfail_strict = true
 
-[tool.ruff]
+[tool.ruff.lint]
 select = [
     "F", # Pyflakes
     "E", # Pycodestyle errors
@@ -70,9 +70,9 @@ ignore = [
     # Don’t complain about “confusables”
     "RUF001", "RUF002", "RUF003"
 ]
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "examples/*.py" = ["E402"]
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 known-first-party = ["sklearn_ann"]
 
 [tool.hatch.envs.default]
