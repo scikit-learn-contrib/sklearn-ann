@@ -1,6 +1,10 @@
 name: Run tests
 
-on: [push, workflow_dispatch]
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
 
 jobs:
   test:
@@ -9,12 +13,15 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          fetch-depth: 0
 
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: "3.12"
           cache: pip
 
       - name: Install project and dependencies
@@ -23,14 +30,23 @@ jobs:
       - name: Run test suite
         run: pytest -v --color=yes
 
-  check: # TODO: replace with pre-commit.ci
+  check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
         with:
-          python-version: "3.10"
-          cache: pip
-      - uses: pre-commit/action@v3.0.0
-        env:
-          SKIP: no-commit-to-branch # only for local development
+          filter: blob:none
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          # cache: pip # TODO: cache tools
+
+      - name: Install tools
+        run: pip install twine build
+
+      - name: Build and check
+        run: |
+          python -m build
+          twine check dist/*.whl

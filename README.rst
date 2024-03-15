@@ -1,6 +1,9 @@
 .. -*- mode: rst -*-
 
-|ReadTheDocs|_
+|PyPI|_ |ReadTheDocs|_
+
+.. |PyPI| image:: https://img.shields.io/pypi/v/sklearn-ann
+.. _PyPI: https://pypi.org/project/sklearn-ann/
 
 .. |ReadTheDocs| image:: https://readthedocs.org/projects/sklearn-ann/badge/?version=latest
 .. _ReadTheDocs: https://sklearn-ann.readthedocs.io/en/latest/?badge=latest

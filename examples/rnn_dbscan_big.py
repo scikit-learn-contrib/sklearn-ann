@@ -6,7 +6,6 @@ Demo of RnnDBSCAN clustering algorithm on large dataset
 Tests RnnDBSCAN on a large dataset. Requires pandas.
 
 """
-print(__doc__)
 
 import numpy as np
 from joblib import Memory
