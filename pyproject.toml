@@ -56,8 +56,6 @@ addopts = [
 xfail_strict = true
 
 [tool.ruff]
-# TODO: remove `target-version` when switching to PEP 621
-target-version = "py39"
 select = [
     "F", # Pyflakes
     "E", # Pycodestyle errors
