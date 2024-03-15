@@ -5,11 +5,10 @@ authors = [
     { name = "Frankie Robertson", email = "frankie@robertson.name" },
     { name = "Philipp Angerer", email = "phil.angerer@gmail.com" }
 ]
-readme = "README.rst"
 license = "BSD-3-Clause"
 urls.Source = "https://github.com/scikit-learn-contrib/sklearn-ann"
 urls.Documentation = "https://sklearn-ann.readthedocs.io/"
-dynamic = ["version"]
+dynamic = ["version", "readme"]
 requires-python = "<3.13,>=3.9"  # enforced by scipy
 dependencies = [
     "scikit-learn>=0.24.0",
@@ -48,6 +47,12 @@ annlibs = [
 
 [tool.hatch.version]
 source = "vcs"
+
+[tool.hatch.metadata.hooks.fancy-pypi-readme]
+content-type = "text/x-rst"
+[[tool.hatch.metadata.hooks.fancy-pypi-readme.fragments]]
+path = "README.rst"
+start-after = ".. inclusion-marker-do-not-remove\n\n"
 
 [tool.pytest.ini_options]
 addopts = [
@@ -94,5 +99,5 @@ build-docs = "sphinx-build -M html docs docs/_build"
 packages = ["src/sklearn_ann"]
 
 [build-system]
-requires = ["hatchling", "hatch-vcs"]
+requires = ["hatchling", "hatch-vcs", "hatch-fancy-pypi-readme"]
 build-backend = "hatchling.build"
