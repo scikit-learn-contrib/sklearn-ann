@@ -65,13 +65,15 @@ select = [
     "PT", # Pytest style
     "PTH", # Pathlib
     "RUF", # Ruff’s own rules
+    "T20", # print statements
 ]
 ignore = [
     # Don’t complain about “confusables”
     "RUF001", "RUF002", "RUF003"
 ]
 [tool.ruff.lint.per-file-ignores]
-"examples/*.py" = ["E402"]
+"examples/*.py" = ["E402", "T20"]
+"tests/*.py" = ["T20"]
 [tool.ruff.lint.isort]
 known-first-party = ["sklearn_ann"]
 
