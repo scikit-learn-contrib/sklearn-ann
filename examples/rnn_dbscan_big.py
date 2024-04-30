@@ -42,25 +42,26 @@ def run_rnn_dbscan(neighbor_transformer, n_neighbors, **kwargs):
     n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
     n_noise_ = list(labels).count(-1)
 
-    print("Estimated number of clusters: %d" % n_clusters_)
-    print("Estimated number of noise points: %d" % n_noise_)
-    print("Homogeneity: %0.3f" % metrics.homogeneity_score(y, labels))
-    print("Completeness: %0.3f" % metrics.completeness_score(y, labels))
-    print("V-measure: %0.3f" % metrics.v_measure_score(y, labels))
-    print("Adjusted Rand Index: %0.3f" % metrics.adjusted_rand_score(y, labels))
-    print(
-        "Adjusted Mutual Information: %0.3f"
-        % metrics.adjusted_mutual_info_score(y, labels)
-    )
-    print("Silhouette Coefficient: %0.3f" % metrics.silhouette_score(X, labels))
+    print(f"""\
+Estimated number of clusters: {n_clusters_}
+Estimated number of noise points: {n_noise_}
+Homogeneity: {metrics.homogeneity_score(y, labels):0.3f}
+Completeness: {metrics.completeness_score(y, labels):0.3f}
+V-measure: {metrics.v_measure_score(y, labels):0.3f}
+Adjusted Rand Index: {metrics.adjusted_rand_score(y, labels):0.3f}
+Adjusted Mutual Information: {metrics.adjusted_mutual_info_score(y, labels):0.3f}
+Silhouette Coefficient: {metrics.silhouette_score(X, labels):0.3f}\
+""")
 
 
 if __name__ == "__main__":
     import code
 
-    print("Now you can import your chosen transformer_cls and run:")
-    print("run_rnn_dbscan(transformer_cls, n_neighbors, **params)")
-    print("e.g.")
-    print("from sklearn_ann.kneighbors.pynndescent import PyNNDescentTransformer")
-    print("run_rnn_dbscan(PyNNDescentTransformer, 10)")
+    print("""\
+Now you can import your chosen transformer_cls and run:
+run_rnn_dbscan(transformer_cls, n_neighbors, **params)
+e.g.
+from sklearn_ann.kneighbors.pynndescent import PyNNDescentTransformer
+run_rnn_dbscan(PyNNDescentTransformer, 10)\
+""")
     code.interact(local=locals())
