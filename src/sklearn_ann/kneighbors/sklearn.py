@@ -7,4 +7,4 @@ KDTreeTransformer = partial(KNeighborsTransformer, algorithm="kd_tree")
 BruteTransformer = partial(KNeighborsTransformer, algorithm="brute")
 
 
-__all__ = ["BallTreeTransformer", "KDTreeTransformer", "BruteTransformer"]
+__all__ = ["BallTreeTransformer", "BruteTransformer", "KDTreeTransformer"]
