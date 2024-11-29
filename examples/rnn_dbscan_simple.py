@@ -81,5 +81,5 @@ for k, col in zip(unique_labels, colors):
         markersize=6,
     )
 
-plt.title("Estimated number of clusters: %d" % n_clusters_)
+plt.title(f"Estimated number of clusters: {n_clusters_}")
 plt.show()
