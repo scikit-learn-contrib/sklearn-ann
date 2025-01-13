@@ -2,6 +2,8 @@ import nmslib
 import numpy as np
 from scipy.sparse import csr_matrix
 from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.utils import Tags, TransformerTags
+from sklearn.utils.validation import validate_data
 
 from ..utils import TransformerChecksMixin, check_metric
 
@@ -28,7 +30,7 @@ class NMSlibTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator)
         self.n_jobs = n_jobs
 
     def fit(self, X, y=None):
-        X = self._validate_data(X)
+        X = validate_data(self, X)
         self.n_samples_fit_ = X.shape[0]
 
         check_metric(self.metric, METRIC_MAP)
@@ -62,8 +64,8 @@ class NMSlibTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator)
 
         return kneighbors_graph
 
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {"check_estimators_pickle": "Cannot pickle NMSLib index"},
-            "preserves_dtype": [np.float32],
-        }
+    def __sklearn_tags__(self) -> Tags:
+        return Tags(
+            estimator_type="transformer",
+            transformer_tags=TransformerTags(preserves_dtype=[np.float32]),
+        )

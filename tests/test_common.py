@@ -31,6 +31,15 @@ ESTIMATORS = [
     pytest.param(KDTreeTransformer),
 ]
 
+PER_ESTIMATOR_XFAIL_CHECKS = {
+    AnnoyTransformer: dict(check_estimators_pickle="Cannot pickle AnnoyIndex"),
+    FAISSTransformer: dict(
+        check_estimators_pickle="Cannot pickle FAISS index",
+        check_methods_subset_invariance="Unable to reset FAISS internal RNG",
+    ),
+    NMSlibTransformer: dict(check_estimators_pickle="Cannot pickle NMSLib index"),
+}
+
 
 def add_mark(param, mark):
     return pytest.param(*param.values, marks=[*param.marks, mark], id=param.id)
@@ -51,7 +60,10 @@ def add_mark(param, mark):
     ],
 )
 def test_all_estimators(Estimator):
-    check_estimator(Estimator())
+    check_estimator(
+        Estimator(),
+        expected_failed_checks=PER_ESTIMATOR_XFAIL_CHECKS.get(Estimator, {}),
+    )
 
 
 # The following critera are from:
