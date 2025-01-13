@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.sparse import csr_matrix
+from sklearn.utils.validation import validate_data
 
 
 def check_metric(metric, metrics):
@@ -90,6 +91,6 @@ class TransformerChecksMixin:
     def _transform_checks(self, X, *fitted_props, **check_params):
         from sklearn.utils.validation import check_is_fitted
 
-        X = self._validate_data(X, reset=False, **check_params)
+        X = validate_data(self, X, reset=False, **check_params)
         check_is_fitted(self, *fitted_props)
         return X

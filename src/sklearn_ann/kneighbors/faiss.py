@@ -9,6 +9,7 @@ from joblib import cpu_count
 from scipy.sparse import csr_matrix
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils import Tags, TargetTags, TransformerTags
+from sklearn.utils.validation import validate_data
 
 from ..utils import TransformerChecksMixin, postprocess_knn_csr
 
@@ -86,7 +87,7 @@ class FAISSTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator):
 
     def fit(self, X, y=None):
         normalize = self._metric_info.get("normalize", False)
-        X = self._validate_data(X, dtype=np.float32, copy=normalize)
+        X = validate_data(self, X, dtype=np.float32, copy=normalize)
         self.n_samples_fit_ = X.shape[0]
         if self.n_jobs == -1:
             n_jobs = cpu_count()

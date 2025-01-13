@@ -5,6 +5,7 @@ import numpy as np
 from sklearn.base import BaseEstimator, ClusterMixin
 from sklearn.neighbors import KNeighborsTransformer
 from sklearn.utils import Tags
+from sklearn.utils.validation import validate_data
 
 from ..utils import get_sparse_row
 
@@ -145,7 +146,7 @@ class RnnDBSCAN(ClusterMixin, BaseEstimator):
         self.keep_knns = keep_knns
 
     def fit(self, X, y=None):
-        X = self._validate_data(X, accept_sparse="csr")
+        X = validate_data(self, X, accept_sparse="csr")
         if self.input_guarantee == "none":
             algorithm = KNeighborsTransformer(n_neighbors=self.n_neighbors)
             X = algorithm.fit_transform(X)

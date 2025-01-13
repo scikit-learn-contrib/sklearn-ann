@@ -3,6 +3,7 @@ import numpy as np
 from scipy.sparse import csr_matrix
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils import Tags, TargetTags, TransformerTags
+from sklearn.utils.validation import validate_data
 
 from ..utils import TransformerChecksMixin
 
@@ -17,7 +18,7 @@ class AnnoyTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator):
         self.metric = metric
 
     def fit(self, X, y=None):
-        X = self._validate_data(X)
+        X = validate_data(self, X)
         self.n_samples_fit_ = X.shape[0]
         metric = self.metric if self.metric != "sqeuclidean" else "euclidean"
         self.annoy_ = annoy.AnnoyIndex(X.shape[1], metric=metric)
