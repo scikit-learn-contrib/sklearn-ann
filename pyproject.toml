@@ -74,6 +74,7 @@ select = [
     "PTH", # Pathlib
     "RUF", # Ruff’s own rules
     "T20", # print statements
+    "TC",  # type checking
 ]
 ignore = [
     # Don’t complain about “confusables”
@@ -84,6 +85,10 @@ ignore = [
 "tests/*.py" = ["T20"]
 [tool.ruff.lint.isort]
 known-first-party = ["sklearn_ann"]
+required-imports = ["from __future__ import annotations"]
+[tool.ruff.lint.flake8-type-checking]
+exempt-modules = []
+strict = true
 
 [tool.hatch.envs.docs]
 installer = "uv"
@@ -96,6 +101,14 @@ features = ["tests", "annlibs"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/sklearn_ann"]
+
+[tool.mypy]
+python_version = "3.11"
+mypy_path = ["src", "tests"]
+strict = true
+explicit_package_bases = true # pytest doesn’t do __init__.py
+no_implicit_optional = true
+disallow_untyped_decorators = false # e.g. pytest.mark.parametrize
 
 [build-system]
 requires = ["hatchling", "hatch-vcs", "hatch-fancy-pypi-readme"]
