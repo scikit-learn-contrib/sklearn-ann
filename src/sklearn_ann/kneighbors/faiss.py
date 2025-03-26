@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+from typing import TYPE_CHECKING, TypedDict
 
 import faiss
 import numpy as np
@@ -13,10 +14,22 @@ from sklearn.utils.validation import validate_data
 
 from ..utils import TransformerChecksMixin, postprocess_knn_csr
 
+if TYPE_CHECKING:
+    from typing import Self
+
+    from numpy.typing import ArrayLike, NDArray
+
+
+class MetricInfo(TypedDict):
+    metric: int
+    normalize: bool
+    negate: bool
+
+
 L2_INFO = {"metric": faiss.METRIC_L2, "sqrt": True}
 
 
-METRIC_MAP = {
+METRIC_MAP: dict[str, MetricInfo] = {
     "cosine": {
         "metric": faiss.METRIC_INNER_PRODUCT,
         "normalize": True,
@@ -34,7 +47,12 @@ METRIC_MAP = {
 }
 
 
-def mk_faiss_index(feats, inner_metric, index_key="", nprobe=128) -> faiss.Index:
+def mk_faiss_index(
+    feats: NDArray[np.float32],
+    inner_metric: int,
+    index_key: str = "",
+    nprobe: int = 128,
+) -> faiss.Index:
     size, dim = feats.shape
     if not index_key:
         if inner_metric == faiss.METRIC_INNER_PRODUCT:
@@ -64,15 +82,15 @@ def mk_faiss_index(feats, inner_metric, index_key="", nprobe=128) -> faiss.Index
 class FAISSTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator):
     def __init__(
         self,
-        n_neighbors=5,
+        n_neighbors: int = 5,
         *,
-        metric="euclidean",
-        index_key="",
-        n_probe=128,
-        n_jobs=-1,
-        include_fwd=True,
-        include_rev=False,
-    ):
+        metric: str = "euclidean",
+        index_key: str = "",
+        n_probe: int = 128,
+        n_jobs: int = -1,
+        include_fwd: bool = True,
+        include_rev: bool = False,
+    ) -> None:
         self.n_neighbors = n_neighbors
         self.metric = metric
         self.index_key = index_key
@@ -82,10 +100,10 @@ class FAISSTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator):
         self.include_rev = include_rev
 
     @property
-    def _metric_info(self):
+    def _metric_info(self) -> MetricInfo:
         return METRIC_MAP[self.metric]
 
-    def fit(self, X, y=None):
+    def fit(self, X: ArrayLike, y: None = None) -> Self:
         normalize = self._metric_info.get("normalize", False)
         X = validate_data(self, X, dtype=np.float32, copy=normalize)
         self.n_samples_fit_ = X.shape[0]
@@ -100,14 +118,14 @@ class FAISSTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator):
         self.faiss_ = mk_faiss_index(X, inner_metric, self.index_key, self.n_probe)
         return self
 
-    def transform(self, X):
+    def transform(self, X: NDArray[np.number]) -> csr_matrix:
         normalize = self._metric_info.get("normalize", False)
         X = self._transform_checks(X, "faiss_", dtype=np.float32, copy=normalize)
         if normalize:
             normalize_L2(X)
         return self._transform(X)
 
-    def _transform(self, X):
+    def _transform(self, X: NDArray[np.float32]) -> csr_matrix:
         n_samples_transform = self.n_samples_fit_ if X is None else X.shape[0]
         n_neighbors = self.n_neighbors + 1
         if X is None:
@@ -156,7 +174,7 @@ class FAISSTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator):
             mat, include_fwd=self.include_fwd, include_rev=self.include_rev
         )
 
-    def fit_transform(self, X, y=None):
+    def fit_transform(self, X: ArrayLike, y: None = None) -> csr_matrix:
         return self.fit(X, y=y)._transform(X=None)
 
     def __sklearn_tags__(self) -> Tags:
