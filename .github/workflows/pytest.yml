@@ -60,6 +60,4 @@ jobs:
       # https://github.com/marketplace/actions/alls-green#why
       - uses: re-actors/alls-green@release/v1
         with:
-          allowed-failures: docs, linters
-          allowed-skips: non-voting-flaky-job
           jobs: ${{ toJSON(needs) }}
