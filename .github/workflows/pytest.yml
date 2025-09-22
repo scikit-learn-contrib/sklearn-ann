@@ -8,20 +8,22 @@ on:
 
 jobs:
   test:
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.13"]
     runs-on: ubuntu-latest
     timeout-minutes: 60
-
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           filter: blob:none
           fetch-depth: 0
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python-version }}
           cache: pip
 
       - name: Install project and dependencies
@@ -30,23 +32,34 @@ jobs:
       - name: Run test suite
         run: pytest -v --color=yes
 
-  check:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           filter: blob:none
           fetch-depth: 0
-
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
-          python-version: "3.12"
-          # cache: pip # TODO: cache tools
-
+          python-version: "3.x"
+          cache: pip
       - name: Install tools
         run: pip install twine build
-
       - name: Build and check
         run: |
           python -m build
           twine check dist/*.whl
+
+  check:
+    if: always()
+    needs:
+      - build
+      - test
+    runs-on: ubuntu-latest
+    steps:
+      # https://github.com/marketplace/actions/alls-green#why
+      - uses: re-actors/alls-green@release/v1
+        with:
+          allowed-failures: docs, linters
+          allowed-skips: non-voting-flaky-job
+          jobs: ${{ toJSON(needs) }}
