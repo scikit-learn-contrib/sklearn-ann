@@ -8,6 +8,7 @@ Finds core samples of high density and expands clusters from them.
 Mostly copypasted from sklearn's DBSCAN example.
 
 """
+from __future__ import annotations
 
 import numpy as np
 from sklearn import metrics
