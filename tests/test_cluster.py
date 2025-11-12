@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pytest
 from sklearn.utils.estimator_checks import check_estimator
 
