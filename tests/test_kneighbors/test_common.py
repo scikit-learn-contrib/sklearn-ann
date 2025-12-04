@@ -1,28 +1,42 @@
+from __future__ import annotations
+
+from importlib.util import find_spec
+from typing import TYPE_CHECKING
+
 import numpy as np
 import pytest
+from sklearn.neighbors import KNeighborsTransformer
 from sklearn.utils.estimator_checks import check_estimator
 
 from sklearn_ann.test_utils import needs
 
-try:
+if not TYPE_CHECKING:
+    AnnoyTransformer = FAISSTransformer = NMSlibTransformer = None
+    PyNNDescentTransformer = KNeighborsTransformer = None
+if find_spec("annoy") or TYPE_CHECKING:
     from sklearn_ann.kneighbors.annoy import AnnoyTransformer
-except ImportError:
-    AnnoyTransformer = "AnnoyTransformer"
-try:
+if find_spec("faiss") or TYPE_CHECKING:
     from sklearn_ann.kneighbors.faiss import FAISSTransformer
-except ImportError:
-    FAISSTransformer = "FAISSTransformer"
-try:
+if find_spec("nmslib") or TYPE_CHECKING:
     from sklearn_ann.kneighbors.nmslib import NMSlibTransformer
-except ImportError:
-    NMSlibTransformer = "NMSlibTransformer"
-try:
+if find_spec("pynndescent") or TYPE_CHECKING:
     from sklearn_ann.kneighbors.pynndescent import PyNNDescentTransformer
-except ImportError:
-    PyNNDescentTransformer = "PyNNDescentTransformer"
+
 from sklearn_ann.kneighbors.sklearn import BallTreeTransformer, KDTreeTransformer
 
-ESTIMATORS = [
+if TYPE_CHECKING:
+    from _pytest.mark import ParameterSet
+    from numpy.typing import NDArray
+
+Estimator = (
+    AnnoyTransformer
+    | FAISSTransformer
+    | NMSlibTransformer
+    | PyNNDescentTransformer
+    | KNeighborsTransformer
+)
+
+ESTIMATORS: ParameterSet[Estimator] = [
     pytest.param(AnnoyTransformer, marks=[needs.annoy()]),
     pytest.param(FAISSTransformer, marks=[needs.faiss()]),
     pytest.param(NMSlibTransformer, marks=[needs.nmslib()]),
@@ -41,7 +55,7 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
 }
 
 
-def add_mark(param, mark):
+def add_mark(param: ParameterSet, mark: pytest.MarkDecorator) -> ParameterSet:
     return pytest.param(*param.values, marks=[*param.marks, mark], id=param.id)
 
 
@@ -59,9 +73,9 @@ def add_mark(param, mark):
         for est in ESTIMATORS
     ],
 )
-def test_all_estimators(Estimator):
+def test_all_estimators(estim_cls: type[Estimator]) -> None:
     check_estimator(
-        Estimator(),
+        estim_cls(),
         expected_failed_checks=PER_ESTIMATOR_XFAIL_CHECKS.get(Estimator, {}),
     )
 
@@ -81,7 +95,7 @@ def test_all_estimators(Estimator):
 #   (or k+1, as explained in the following note).
 
 
-def mark_diagonal_0_xfail(est):
+def mark_diagonal_0_xfail(est: ParameterSet[Estimator]) -> ParameterSet[Estimator]:
     """Mark flaky tests as xfail(strict=False)."""
     # Should probably postprocess these...
     reasons = {
@@ -96,16 +110,18 @@ def mark_diagonal_0_xfail(est):
 
 
 @pytest.mark.parametrize(
-    "Estimator", [mark_diagonal_0_xfail(est) for est in ESTIMATORS]
+    "estim_cls", [mark_diagonal_0_xfail(est) for est in ESTIMATORS]
 )
-def test_all_return_diagonal_0(random_small, Estimator):
+def test_all_return_diagonal_0(
+    random_small: NDArray[np.float64], estim_cls: type[Estimator]
+) -> None:
     # * only explicitly store nearest neighborhoods of each sample with respect to the
     #   training data. This should include those at 0 distance from a query point,
     #   including the matrix diagonal when computing the nearest neighborhoods
     #   between the training data and itself.
 
     # Check: do we alway get an "extra" neighbour (diagonal/self)
-    est = Estimator(n_neighbors=3)
+    est = estim_cls(n_neighbors=3)
     knns = est.fit_transform(random_small)
     assert (knns.getnnz(1) == 4).all()
 
@@ -127,10 +143,10 @@ def test_all_return_diagonal_0(random_small, Estimator):
 
 
 @pytest.mark.parametrize("Estimator", ESTIMATORS)
-def test_all_same(random_small, Estimator):
+def test_all_same(estim_cls: type[Estimator]) -> None:
     # Again but for the case of the same element
     ones = np.ones((64, 4))
-    est = Estimator(n_neighbors=3)
+    est = estim_cls(n_neighbors=3)
     knns = est.fit_transform(ones)
     print("knns", knns)
     assert (knns.getnnz(1) == 4).all()
