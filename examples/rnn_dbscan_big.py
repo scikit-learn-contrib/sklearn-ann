@@ -7,6 +7,10 @@ Tests RnnDBSCAN on a large dataset. Requires pandas.
 
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import numpy as np
 from joblib import Memory
 from sklearn import metrics
@@ -14,10 +18,15 @@ from sklearn.datasets import fetch_openml
 
 from sklearn_ann.cluster.rnn_dbscan import simple_rnn_dbscan_pipeline
 
+if TYPE_CHECKING:
+    from typing import Any
+
+    from sklearn.utils import Bunch
+
 
 # #############################################################################
 # Generate sample data
-def fetch_mnist():
+def fetch_mnist() -> Bunch:
     print("Downloading mnist_784")
     mnist = fetch_openml("mnist_784")
     return mnist.data / 255, mnist.target
@@ -28,7 +37,9 @@ memory = Memory("./mnist")
 X, y = memory.cache(fetch_mnist)()
 
 
-def run_rnn_dbscan(neighbor_transformer, n_neighbors, **kwargs):
+def run_rnn_dbscan(
+    neighbor_transformer: object, n_neighbors: int, **kwargs: Any
+) -> None:
     # #############################################################################
     # Compute RnnDBSCAN
 
