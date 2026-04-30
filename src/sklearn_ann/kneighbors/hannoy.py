@@ -18,11 +18,20 @@ METRIC_MAP = {
     "euclidean": Metric.EUCLIDEAN,
 }
 
+
 class HannoyTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator):
     # known issue where multiple Database instances silently share the first one's LMDB env
 
-    def __init__( self, n_neighbors=5, *, metric="euclidean", path=None, m=16,
-                 ef_construction=96, ef_search=200):
+    def __init__(
+        self,
+        n_neighbors=5,
+        *,
+        metric="euclidean",
+        path=None,
+        m=16,
+        ef_construction=96,
+        ef_search=200,
+    ):
         self.n_neighbors = n_neighbors
         self.metric = metric
         # LMDB directory for the index; if None = auto-create a temp dir
@@ -34,14 +43,16 @@ class HannoyTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator)
         # hannoy default is 200 (higher = better recall, slower search)
         self.ef_search = ef_search
 
-    def fit(self, X, y = None):
+    def fit(self, X, y=None):
         X = validate_data(self, X)
         self.n_samples_fit_ = X.shape[0]
 
         # storing validated X for fit_transform as hannoy doesn't have by_item yet
         self.fit_X = X
         # path to LMDB
-        path = self.path if self.path is not None else tempfile.mkdtemp(prefix="hannoy_")
+        path = (
+            self.path if self.path is not None else tempfile.mkdtemp(prefix="hannoy_")
+        )
 
         # converting to the metric names used by hannoy
         hannoy_metric = METRIC_MAP[self.metric]
@@ -78,7 +89,9 @@ class HannoyTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator)
             # hannoy for each row by_vec
             results = self.hannoy_reader_.by_vec(
                 # returning in a list form because Rust requires it
-                x.tolist(), n=n_neighbors, ef_search=self.ef_search
+                x.tolist(),
+                n=n_neighbors,
+                ef_search=self.ef_search,
             )
             # unpacking into pre-allocated arrays
             for j, (idx, dist) in enumerate(results):
