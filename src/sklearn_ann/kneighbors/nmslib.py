@@ -1,11 +1,21 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, cast
+
 import nmslib
 import numpy as np
+from numpy.typing import NDArray
 from scipy.sparse import csr_matrix
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils import Tags, TargetTags, TransformerTags
 from sklearn.utils.validation import validate_data
 
 from ..utils import TransformerChecksMixin, check_metric
+
+if TYPE_CHECKING:
+    from typing import Self
+
+    from numpy.typing import ArrayLike
 
 # see more metric in the manual
 # https://github.com/nmslib/nmslib/tree/master/manual
@@ -22,15 +32,20 @@ class NMSlibTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator)
     """Wrapper for using nmslib as sklearn's KNeighborsTransformer"""
 
     def __init__(
-        self, n_neighbors=5, *, metric="euclidean", method="sw-graph", n_jobs=1
-    ):
+        self,
+        n_neighbors: int = 5,
+        *,
+        metric: str = "euclidean",
+        method: str = "sw-graph",
+        n_jobs: int = 1,
+    ) -> None:
         self.n_neighbors = n_neighbors
         self.method = method
         self.metric = metric
         self.n_jobs = n_jobs
 
-    def fit(self, X, y=None):
-        X = validate_data(self, X)
+    def fit(self, X: ArrayLike, y: None = None) -> Self:
+        X = cast(NDArray[np.float64], validate_data(self, X))
         self.n_samples_fit_ = X.shape[0]
 
         check_metric(self.metric, METRIC_MAP)
@@ -41,7 +56,7 @@ class NMSlibTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator)
         self.nmslib_.createIndex()
         return self
 
-    def transform(self, X):
+    def transform(self, X: NDArray[np.float64]) -> csr_matrix:
         X = self._transform_checks(X, "nmslib_")
         n_samples_transform = X.shape[0]
 
