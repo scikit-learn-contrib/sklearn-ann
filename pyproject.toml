@@ -9,26 +9,13 @@ license = "BSD-3-Clause"
 urls.Source = "https://github.com/scikit-learn-contrib/sklearn-ann"
 urls.Documentation = "https://sklearn-ann.readthedocs.io/"
 dynamic = ["version", "readme"]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "scikit-learn>=1.6.0",
     "scipy>=1.11.1,<2.0.0",
 ]
 
 [project.optional-dependencies]
-tests = [
-    "pytest>=6.2.1",
-    "pytest-cov>=2.10.1",
-]
-docs = [
-    "sphinx>=7",
-    "sphinx-gallery>=0.8.2",
-    "sphinx-book-theme>=1.1.0",
-    "sphinx-issues>=1.2.0",
-    "numpydoc>=1.1.0",
-    "matplotlib>=3.3.3",
-    "scanpydoc",
-]
 annoy = [
     "annoy>=1.17.0,<2.0.0",
 ]
@@ -44,6 +31,21 @@ nmslib = [
 ]
 annlibs = [
     "sklearn-ann[annoy,faiss,pynndescent,nmslib]",
+]
+
+[dependency-groups]
+tests = [
+    "pytest>=6.2.1",
+    "pytest-cov>=2.10.1",
+]
+docs = [
+    "sphinx>=7",
+    "sphinx-gallery>=0.8.2",
+    "sphinx-book-theme>=1.1.0",
+    "sphinx-issues>=1.2.0",
+    "numpydoc>=1.1.0",
+    "matplotlib>=3.3.3",
+    "scanpydoc",
 ]
 
 [tool.hatch.version]
@@ -92,23 +94,33 @@ strict = true
 
 [tool.hatch.envs.docs]
 installer = "uv"
-features = ["docs", "annlibs"]
+features = ["annlibs"]
+dependency-groups = ["docs"]
 scripts.build = "sphinx-build -M html docs docs/_build"
 
 [tool.hatch.envs.hatch-test]
 default-args = []
-features = ["tests", "annlibs"]
+features = ["annlibs"]
+dependency-groups = ["tests"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/sklearn_ann"]
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"
 mypy_path = ["src", "tests"]
 strict = true
 explicit_package_bases = true # pytest doesn’t do __init__.py
 no_implicit_optional = true
 disallow_untyped_decorators = false # e.g. pytest.mark.parametrize
+follow_untyped_imports = true
+# follow_untyped_imports makes these readable, but not annotated
+untyped_calls_exclude = ["sklearn", "joblib", "pynndescent"]
+
+[[tool.mypy.overrides]]
+# pynndescent has no __all__, so its re-exports are implicit
+module = ["pynndescent"]
+no_implicit_reexport = false
 
 [build-system]
 requires = ["hatchling", "hatch-vcs", "hatch-fancy-pypi-readme"]

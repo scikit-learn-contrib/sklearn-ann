@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING, cast
 
 import nmslib
 import numpy as np
-from numpy.typing import NDArray
 from scipy.sparse import csr_matrix
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils import Tags, TargetTags, TransformerTags
@@ -15,7 +14,7 @@ from ..utils import TransformerChecksMixin, check_metric
 if TYPE_CHECKING:
     from typing import Self
 
-    from numpy.typing import ArrayLike
+    from numpy.typing import ArrayLike, NDArray
 
 # see more metric in the manual
 # https://github.com/nmslib/nmslib/tree/master/manual
@@ -45,7 +44,7 @@ class NMSlibTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator)
         self.n_jobs = n_jobs
 
     def fit(self, X: ArrayLike, y: None = None) -> Self:
-        X = cast(NDArray[np.float64], validate_data(self, X))
+        X = cast("NDArray[np.float64]", validate_data(self, X))
         self.n_samples_fit_ = X.shape[0]
 
         check_metric(self.metric, METRIC_MAP)
@@ -65,8 +64,8 @@ class NMSlibTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator)
         n_neighbors = self.n_neighbors + 1
 
         results = self.nmslib_.knnQueryBatch(X, k=n_neighbors, num_threads=self.n_jobs)
-        indices, distances = zip(*results)
-        indices, distances = np.vstack(indices), np.vstack(distances)
+        idx_rows, dist_rows = zip(*results)
+        indices, distances = np.vstack(idx_rows), np.vstack(dist_rows)
 
         if self.metric == "sqeuclidean":
             distances **= 2
@@ -83,5 +82,5 @@ class NMSlibTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator)
         return Tags(
             estimator_type="transformer",
             target_tags=TargetTags(required=False),
-            transformer_tags=TransformerTags(preserves_dtype=[np.float32]),
+            transformer_tags=TransformerTags(preserves_dtype=["float32"]),
         )

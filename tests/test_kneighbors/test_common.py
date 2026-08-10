@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from importlib.util import find_spec
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 import pytest
@@ -36,7 +36,7 @@ Estimator = (
     | KNeighborsTransformer
 )
 
-ESTIMATORS: ParameterSet[Estimator] = [
+ESTIMATORS: list[ParameterSet] = [
     pytest.param(AnnoyTransformer, marks=[needs.annoy()]),
     pytest.param(FAISSTransformer, marks=[needs.faiss()]),
     pytest.param(NMSlibTransformer, marks=[needs.nmslib()]),
@@ -46,7 +46,12 @@ ESTIMATORS: ParameterSet[Estimator] = [
 ]
 
 PER_ESTIMATOR_XFAIL_CHECKS = {
-    AnnoyTransformer: dict(check_estimators_pickle="Cannot pickle AnnoyIndex"),
+    AnnoyTransformer: dict(
+        check_estimators_pickle="Cannot pickle AnnoyIndex",
+        # fit_transform uses get_nns_by_item, transform uses get_nns_by_vector
+        check_transformer_general="fit_transform and transform disagree",
+        check_transformer_data_not_an_array="fit_transform and transform disagree",
+    ),
     FAISSTransformer: dict(
         check_estimators_pickle="Cannot pickle FAISS index",
         check_methods_subset_invariance="Unable to reset FAISS internal RNG",
@@ -60,7 +65,7 @@ def add_mark(param: ParameterSet, mark: pytest.MarkDecorator) -> ParameterSet:
 
 
 @pytest.mark.parametrize(
-    "Estimator",
+    "estim_cls",
     [
         add_mark(
             est,
@@ -76,7 +81,7 @@ def add_mark(param: ParameterSet, mark: pytest.MarkDecorator) -> ParameterSet:
 def test_all_estimators(estim_cls: type[Estimator]) -> None:
     check_estimator(
         estim_cls(),
-        expected_failed_checks=PER_ESTIMATOR_XFAIL_CHECKS.get(Estimator, {}),
+        expected_failed_checks=PER_ESTIMATOR_XFAIL_CHECKS.get(estim_cls, {}),
     )
 
 
@@ -95,17 +100,20 @@ def test_all_estimators(estim_cls: type[Estimator]) -> None:
 #   (or k+1, as explained in the following note).
 
 
-def mark_diagonal_0_xfail(est: ParameterSet[Estimator]) -> ParameterSet[Estimator]:
-    """Mark flaky tests as xfail(strict=False)."""
+def mark_diagonal_0_xfail(est: ParameterSet) -> ParameterSet:
+    """Mark known-broken tests as xfail, the flaky ones with strict=False."""
     # Should probably postprocess these...
-    reasons = {
-        PyNNDescentTransformer: "sometimes doesn't return diagonal==0",
-        FAISSTransformer: "sometimes returns diagonal==eps where eps is small",
+    reasons: dict[type, tuple[str, bool]] = {
+        AnnoyTransformer: ("doesn't include every point in its own neighborhood", True),
+        PyNNDescentTransformer: ("sometimes doesn't return diagonal==0", False),
+        FAISSTransformer: ("sometimes returns diagonal==eps where eps is small", False),
     }
-    [val] = est.values
-    name = val.__name__ if isinstance(val, type) else val
-    if reason := reasons.get(val):
-        return add_mark(est, pytest.mark.xfail(reason=f"{name} {reason}", strict=False))
+    [val] = cast("tuple[type[Estimator]]", est.values)
+    if found := reasons.get(val):
+        reason, strict = found
+        return add_mark(
+            est, pytest.mark.xfail(reason=f"{val.__name__} {reason}", strict=strict)
+        )
     return est
 
 
@@ -142,7 +150,7 @@ def test_all_return_diagonal_0(
     assert next_expected_diagonal == len(random_small)
 
 
-@pytest.mark.parametrize("Estimator", ESTIMATORS)
+@pytest.mark.parametrize("estim_cls", ESTIMATORS)
 def test_all_same(estim_cls: type[Estimator]) -> None:
     # Again but for the case of the same element
     ones = np.ones((64, 4))

@@ -7,7 +7,7 @@ from scipy.sparse import csr_matrix
 from sklearn.utils.validation import validate_data
 
 if TYPE_CHECKING:
-    from collections.abc import Container, Iterable
+    from collections.abc import Container, Iterator
     from typing import TypeVar
 
     T = TypeVar("T")
@@ -18,7 +18,7 @@ def check_metric(metric: str, metrics: Container[str]) -> None:
         raise ValueError(f"Unknown metric {metric!r}. Valid metrics are {metrics!r}")
 
 
-def get_sparse_row(mat: csr_matrix, idx: int) -> Iterable[tuple[int, float]]:
+def get_sparse_row(mat: csr_matrix, idx: int) -> Iterator[tuple[int, float]]:
     start_idx = mat.indptr[idx]
     end_idx = mat.indptr[idx + 1]
     return zip(mat.indices[start_idx:end_idx], mat.data[start_idx:end_idx])
@@ -27,7 +27,7 @@ def get_sparse_row(mat: csr_matrix, idx: int) -> Iterable[tuple[int, float]]:
 def trunc_csr(csr: csr_matrix, k: int) -> csr_matrix:
     indptr = np.empty_like(csr.indptr)
     num_rows = len(csr.indptr) - 1
-    indices = [np.empty(0, dtype=np.float64)] * num_rows
+    indices = [np.empty(0, dtype=csr.indices.dtype)] * num_rows
     data = [np.empty(0, dtype=np.float64)] * num_rows
     cur_indptr = 0
     for row_idx in range(num_rows):
@@ -71,7 +71,7 @@ def or_else_csrs(csr1: csr_matrix, csr2: csr_matrix) -> csr_matrix:
                 case (cur_index, cur_datum), _:  # they are equal
                     cur_csr1 = next(csr1_it, None)
                     cur_csr2 = next(csr2_it, None)
-            indices.append(cur_index)  # type: ignore[arg-type]  # mypy bug
+            indices.append(cur_index)
             data.append(cur_datum)
     indptr[-1] = len(indices)
     return csr_matrix((data, indices, indptr), shape=csr1.shape)
@@ -83,11 +83,11 @@ def postprocess_knn_csr(
     if not include_fwd and not include_rev:
         raise ValueError("One of include_fwd or include_rev must be True")
     elif include_rev and not include_fwd:
-        return knns.transpose(copy=False)
+        return knns.transpose(copy=False).tocsr()
     elif not include_rev and include_fwd:
         return knns
     else:
-        inv_knns = knns.transpose(copy=True)
+        inv_knns = knns.transpose(copy=True).tocsr()
         return or_else_csrs(knns, inv_knns)
 
 

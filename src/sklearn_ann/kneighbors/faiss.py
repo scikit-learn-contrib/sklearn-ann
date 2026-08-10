@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING, TypedDict
+from typing import TYPE_CHECKING, NamedTuple, cast
 
 import faiss
 import numpy as np
@@ -20,30 +20,27 @@ if TYPE_CHECKING:
     from numpy.typing import ArrayLike, NDArray
 
 
-class MetricInfo(TypedDict):
+class MetricInfo(NamedTuple):
     metric: int
-    normalize: bool
-    negate: bool
+    normalize: bool = False
+    negate: bool = False
+    sqrt: bool = False
 
 
-L2_INFO = {"metric": faiss.METRIC_L2, "sqrt": True}
+L2_INFO = MetricInfo(faiss.METRIC_L2, sqrt=True)
 
 
 METRIC_MAP: dict[str, MetricInfo] = {
-    "cosine": {
-        "metric": faiss.METRIC_INNER_PRODUCT,
-        "normalize": True,
-        "negate": True,
-    },
-    "l1": {"metric": faiss.METRIC_L1},
-    "cityblock": {"metric": faiss.METRIC_L1},
-    "manhattan": {"metric": faiss.METRIC_L1},
+    "cosine": MetricInfo(faiss.METRIC_INNER_PRODUCT, normalize=True, negate=True),
+    "l1": MetricInfo(faiss.METRIC_L1),
+    "cityblock": MetricInfo(faiss.METRIC_L1),
+    "manhattan": MetricInfo(faiss.METRIC_L1),
     "l2": L2_INFO,
     "euclidean": L2_INFO,
-    "sqeuclidean": {"metric": faiss.METRIC_L2},
-    "canberra": {"metric": faiss.METRIC_Canberra},
-    "braycurtis": {"metric": faiss.METRIC_BrayCurtis},
-    "jensenshannon": {"metric": faiss.METRIC_JensenShannon},
+    "sqeuclidean": MetricInfo(faiss.METRIC_L2),
+    "canberra": MetricInfo(faiss.METRIC_Canberra),
+    "braycurtis": MetricInfo(faiss.METRIC_BrayCurtis),
+    "jensenshannon": MetricInfo(faiss.METRIC_JensenShannon),
 }
 
 
@@ -54,6 +51,7 @@ def mk_faiss_index(
     nprobe: int = 128,
 ) -> faiss.Index:
     size, dim = feats.shape
+    index: faiss.Index
     if not index_key:
         if inner_metric == faiss.METRIC_INNER_PRODUCT:
             index = faiss.IndexFlatIP(dim)
@@ -65,15 +63,12 @@ def mk_faiss_index(
                 "HNSW not implemented: returns distances insted of sims"
             )
         nlist = min(4096, 8 * round(math.sqrt(size)))
-        if index_key == "IVF":
-            quantizer = index
-            index = faiss.IndexIVFFlat(quantizer, dim, nlist, inner_metric)
-        else:
-            index = faiss.index_factory(dim, index_key, inner_metric)
+        index = faiss.index_factory(dim, index_key, inner_metric)
         if index_key.find("Flat") < 0:
             assert not index.is_trained
         index.train(feats)
-        index.nprobe = min(nprobe, nlist)
+        if isinstance(index, faiss.IndexIVF):
+            index.nprobe = min(nprobe, nlist)
         assert index.is_trained
     index.add(feats)
     return index
@@ -104,31 +99,40 @@ class FAISSTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator):
         return METRIC_MAP[self.metric]
 
     def fit(self, X: ArrayLike, y: None = None) -> Self:
-        normalize = self._metric_info.get("normalize", False)
-        X = validate_data(self, X, dtype=np.float32, copy=normalize)
+        normalize = self._metric_info.normalize
+        X = cast(
+            "NDArray[np.float32]",
+            validate_data(self, X, dtype=np.float32, copy=normalize),
+        )
         self.n_samples_fit_ = X.shape[0]
         if self.n_jobs == -1:
             n_jobs = cpu_count()
         else:
             n_jobs = self.n_jobs
         faiss.omp_set_num_threads(n_jobs)
-        inner_metric = self._metric_info["metric"]
         if normalize:
             normalize_L2(X)
-        self.faiss_ = mk_faiss_index(X, inner_metric, self.index_key, self.n_probe)
+        self.faiss_ = mk_faiss_index(
+            X, self._metric_info.metric, self.index_key, self.n_probe
+        )
         return self
 
     def transform(self, X: NDArray[np.number]) -> csr_matrix:
-        normalize = self._metric_info.get("normalize", False)
-        X = self._transform_checks(X, "faiss_", dtype=np.float32, copy=normalize)
+        normalize = self._metric_info.normalize
+        X = cast(
+            "NDArray[np.float32]",
+            self._transform_checks(X, "faiss_", dtype=np.float32, copy=normalize),
+        )
         if normalize:
             normalize_L2(X)
         return self._transform(X)
 
-    def _transform(self, X: NDArray[np.float32]) -> csr_matrix:
+    def _transform(self, X: NDArray[np.float32] | None) -> csr_matrix:
         n_samples_transform = self.n_samples_fit_ if X is None else X.shape[0]
         n_neighbors = self.n_neighbors + 1
         if X is None:
+            # only flat indices store their vectors, i.e. `index_key` has to be empty
+            assert isinstance(self.faiss_, faiss.IndexFlat)
             sims, nbrs = self.faiss_.search(
                 np.reshape(
                     faiss.rev_swig_ptr(
@@ -141,9 +145,9 @@ class FAISSTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator):
         else:
             sims, nbrs = self.faiss_.search(X, k=n_neighbors)
         dist_arr = np.array(sims, dtype=np.float32)
-        if self._metric_info.get("sqrt", False):
+        if self._metric_info.sqrt:
             dist_arr = np.sqrt(dist_arr)
-        if self._metric_info.get("negate", False):
+        if self._metric_info.negate:
             dist_arr = 1 - dist_arr
         del sims
         nbr_arr = np.array(nbrs, dtype=np.int32)
@@ -174,14 +178,14 @@ class FAISSTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator):
             mat, include_fwd=self.include_fwd, include_rev=self.include_rev
         )
 
-    def fit_transform(self, X: ArrayLike, y: None = None) -> csr_matrix:
+    def fit_transform(self, X: ArrayLike, y: None = None) -> csr_matrix:  # type: ignore[override]
         return self.fit(X, y=y)._transform(X=None)
 
     def __sklearn_tags__(self) -> Tags:
         return Tags(
             estimator_type="transformer",
             target_tags=TargetTags(required=False),
-            transformer_tags=TransformerTags(preserves_dtype=[np.float32]),
+            transformer_tags=TransformerTags(preserves_dtype=["float32"]),
             # Could be made deterministic *if* we could reset FAISS's internal RNG
             non_deterministic=True,
         )
