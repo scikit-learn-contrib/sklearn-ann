@@ -27,6 +27,7 @@ repos:
         additional_dependencies:
           - faiss-cpu
           - matplotlib
+          - numba>=0.59 # prevent broken backtracking
           - pynndescent
           - pytest
           - scikit-learn
