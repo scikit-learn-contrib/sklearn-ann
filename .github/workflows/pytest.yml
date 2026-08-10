@@ -26,18 +26,23 @@ jobs:
         uses: astral-sh/setup-uv@v9.0.0
         with:
           enable-cache: true
-          python-version: ${{ matrix.python-version }}
+
+      - &hatch
+        name: Install Hatch
+        # https://github.com/pypa/hatch/pull/2351
+        run: uv tool install git+https://github.com/pypa/hatch.git@af5339a1a5bb8e6d4b659c4c1bfff8e7e37cdaff
 
       - name: Run test suite
-        run: uv run --extra annlibs --group tests pytest -v --color=yes
+        run: hatch test -py ${{ matrix.python-version }} -v --color=yes
 
   types:
     runs-on: ubuntu-latest
     steps:
       - *clone
       - *uv
+      - *hatch
       - name: Type check
-        run: uvx hatch check types
+        run: hatch check types
 
   build:
     runs-on: ubuntu-latest
