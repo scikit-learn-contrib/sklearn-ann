@@ -9,7 +9,7 @@ license = "BSD-3-Clause"
 urls.Source = "https://github.com/scikit-learn-contrib/sklearn-ann"
 urls.Documentation = "https://sklearn-ann.readthedocs.io/"
 dynamic = ["version", "readme"]
-requires-python = "<3.13,>=3.9"  # enforced by scipy
+requires-python = ">=3.9"
 dependencies = [
     "scikit-learn>=1.6.0",
     "scipy>=1.11.1,<2.0.0",
