@@ -12,9 +12,13 @@ from sklearn.utils.validation import validate_data
 from ..utils import TransformerChecksMixin
 
 if TYPE_CHECKING:
-    from typing import Self
+    from typing import Literal, Self, TypeAlias
 
     from numpy.typing import ArrayLike, NDArray
+
+    Metric: TypeAlias = Literal[
+        "angular", "euclidean", "manhattan", "hamming", "dot", "sqeuclidean"
+    ]
 
 
 class AnnoyTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator):
@@ -24,7 +28,7 @@ class AnnoyTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator):
         self,
         n_neighbors: int = 5,
         *,
-        metric: str = "euclidean",
+        metric: Metric = "euclidean",
         n_trees: int = 10,
         search_k: int = -1,
     ) -> None:
@@ -36,7 +40,7 @@ class AnnoyTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator):
     def fit(self, X: ArrayLike, y: None = None) -> Self:
         X = cast("NDArray[np.float64]", validate_data(self, X))
         self.n_samples_fit_ = X.shape[0]
-        metric = self.metric if self.metric != "sqeuclidean" else "euclidean"
+        metric = "euclidean" if self.metric == "sqeuclidean" else self.metric
         self.annoy_ = annoy.AnnoyIndex(X.shape[1], metric=metric)
         for i, x in enumerate(X):
             self.annoy_.add_item(i, x.tolist())

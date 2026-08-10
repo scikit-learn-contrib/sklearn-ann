@@ -34,10 +34,6 @@ annlibs = [
 ]
 
 [dependency-groups]
-tests = [
-    "pytest>=6.2.1",
-    "pytest-cov>=2.10.1",
-]
 docs = [
     "sphinx>=7",
     "sphinx-gallery>=0.8.2",
@@ -46,6 +42,14 @@ docs = [
     "numpydoc>=1.1.0",
     "matplotlib>=3.3.3",
     "scanpydoc",
+]
+tests = [
+    "pytest>=6.2.1",
+    "pytest-cov>=2.10.1",
+]
+typing = [
+    "matplotlib",  # examples are type checked, too
+    "scipy-stubs",
 ]
 
 [tool.hatch.version]
@@ -98,6 +102,12 @@ features = ["annlibs"]
 dependency-groups = ["docs"]
 scripts.build = "sphinx-build -M html docs docs/_build"
 
+[tool.hatch.envs.hatch-check-types]
+dependencies = ["mypy"]
+features = ["annlibs"]
+dependency-groups = [ "tests", "typing" ]
+scripts.check = "mypy {args:.}"
+
 [tool.hatch.envs.hatch-test]
 default-args = []
 features = ["annlibs"]
@@ -121,6 +131,11 @@ untyped_calls_exclude = ["sklearn", "joblib", "pynndescent"]
 # pynndescent has no __all__, so its re-exports are implicit
 module = ["pynndescent"]
 no_implicit_reexport = false
+
+[[tool.mypy.overrides]]
+# nmslib is a compiled extension module without stubs
+module = ["nmslib"]
+ignore_missing_imports = true
 
 [build-system]
 requires = ["hatchling", "hatch-vcs", "hatch-fancy-pypi-readme"]
