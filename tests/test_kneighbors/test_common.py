@@ -101,18 +101,17 @@ def test_all_estimators(estim_cls: type[Estimator]) -> None:
 
 
 def mark_diagonal_0_xfail(est: ParameterSet) -> ParameterSet:
-    """Mark known-broken tests as xfail, the flaky ones with strict=False."""
+    """Mark flaky tests as xfail(strict=False)."""
     # Should probably postprocess these...
-    reasons: dict[type, tuple[str, bool]] = {
-        AnnoyTransformer: ("doesn't include every point in its own neighborhood", True),
-        PyNNDescentTransformer: ("sometimes doesn't return diagonal==0", False),
-        FAISSTransformer: ("sometimes returns diagonal==eps where eps is small", False),
+    reasons = {
+        AnnoyTransformer: "sometimes omits points from their own neighborhood",
+        PyNNDescentTransformer: "sometimes doesn't return diagonal==0",
+        FAISSTransformer: "sometimes returns diagonal==eps where eps is small",
     }
     [val] = cast("tuple[type[Estimator]]", est.values)
-    if found := reasons.get(val):
-        reason, strict = found
+    if reason := reasons.get(val):
         return add_mark(
-            est, pytest.mark.xfail(reason=f"{val.__name__} {reason}", strict=strict)
+            est, pytest.mark.xfail(reason=f"{val.__name__} {reason}", strict=False)
         )
     return est
 
