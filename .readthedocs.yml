@@ -12,9 +12,7 @@ build:
       - asdf plugin add uv
       - asdf install uv latest
       - asdf global uv latest
-      # https://github.com/pypa/hatch/pull/2351
-      - UV_TOOL_BIN_DIR=$HOME/.asdf/bin uv tool install git+https://github.com/pypa/hatch.git@af5339a1a5bb8e6d4b659c4c1bfff8e7e37cdaff
     build:
       html:
-        - hatch run docs:build
+        - uvx hatch run docs:build
         - mv docs/_build $READTHEDOCS_OUTPUT
