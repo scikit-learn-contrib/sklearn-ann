@@ -1,4 +1,6 @@
 # hannoy needs a filesystem path (LMDB-backed)
+from __future__ import annotations
+
 import tempfile
 from itertools import count
 
@@ -112,17 +114,21 @@ class HannoyTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator)
         n_samples_transform = self.n_samples_fit_
         n_neighbors = self.n_neighbors + 1
         indices = np.zeros((n_samples_transform, n_neighbors), dtype=np.uint32)
-        distances = np.full((n_samples_transform, n_neighbors), np.inf, dtype=np.float32)
+        distances = np.full(
+            (n_samples_transform, n_neighbors), np.inf, dtype=np.float32
+        )
         # by_items excludes the point itself from its results, so we do
         # the following to have the same shape
         indices[:, 0] = np.arange(n_samples_transform, dtype=np.uint32)
         distances[:, 0] = 0.0
         results = self.hannoy_reader_.by_items(
-            list(range(n_samples_transform)), n=self.n_neighbors, ef_search = self.ef_search
+            list(range(n_samples_transform)),
+            n=self.n_neighbors,
+            ef_search=self.ef_search,
         )
         for i, hits in enumerate(results):
             if hits:
-                hits = np.asarray(hits, dtype = np.float32)
+                hits = np.asarray(hits, dtype=np.float32)
                 indices[i, 1 : 1 + len(hits)] = hits[:, 0]
                 distances[i, 1 : 1 + len(hits)] = hits[:, 1]
         return self._transform(indices, distances)
