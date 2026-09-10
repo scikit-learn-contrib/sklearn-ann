@@ -96,15 +96,6 @@ class HannoyTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator)
     def transform(self, X):
         # verify that fit was called and + that X has the right number of features
         X = self._transform_checks(X, "hannoy_reader_", dtype=np.float32, order="C")
-        return self._transform(X)
-
-    def fit_transform(self, X, y=None):
-        self.fit(X)
-        X = validate_data(self, X, dtype=np.float32, order="C", reset=False)
-        return self._transform(X)
-
-    def _transform(self, X):
-        # how many points
         n_samples_transform = X.shape[0]
         n_neighbors = self.n_neighbors + 1
         # pre allocating indicies for which points are neighbots
@@ -113,6 +104,30 @@ class HannoyTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator)
         self.hannoy_reader_.by_array(
             X, n=n_neighbors, ef_search=self.ef_search, out=(indices, distances)
         )
+        return self._transform(indices, distances)
+
+    def fit_transform(self, X, y=None):
+        self.fit(X)
+        validate_data(self, X, dtype=np.float32, order="C", reset=False)
+        n_samples_transform = self.n_samples_fit_
+        n_neighbors = self.n_neighbors + 1
+        indices = np.zeros((n_samples_transform, n_neighbors), dtype=np.uint32)
+        distances = np.full((n_samples_transform, n_neighbors), np.inf, dtype=np.float32)
+        indices[:, 0] = np.arange(n_samples_transform, dtype=np.uint32)
+        distances[:, 0] = 0.0
+        results = self.hannoy_reader_.by_items(
+            list(range(n_samples_transform)), n=self.n_neighbors, ef_search = self.ef_search
+        )
+        for i, hits in enumerate(results):
+            if hits:
+                hits = np.asarray(hits, dtype = np.float32)
+                indices[i, 1 : 1 + len(hits)] = hits[:, 0]
+                distances[i, 1 : 1 + len(hits)] = hits[:, 1]
+        return self._transform(indices, distances)
+
+    def _transform(self, indices, distances):
+        # how many points
+        n_samples_transform, n_neighbors = indices.shape
 
         metric = Metric.EUCLIDEAN if self.metric is None else self.metric
         if metric == Metric.EUCLIDEAN:
