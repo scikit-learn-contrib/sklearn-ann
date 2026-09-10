@@ -22,6 +22,9 @@ annoy = [
 faiss = [
     "faiss-cpu>=1.6.5,<2.0.0",
 ]
+hannoy = [
+    "hannoy>=0.1.3",  # TODO: bump to the actual version containing `by_array`
+]
 pynndescent = [
     "pynndescent>=0.5.1,<1.0.0",
     "numba>=0.52",
@@ -30,7 +33,7 @@ nmslib = [
     "nmslib-metabrainz>=2.1.1,<3.0.0",
 ]
 annlibs = [
-    "sklearn-ann[annoy,faiss,pynndescent,nmslib]",
+    "sklearn-ann[annoy,faiss,hannoy,pynndescent,nmslib]",
 ]
 
 [dependency-groups]
@@ -136,6 +139,9 @@ no_implicit_reexport = false
 # nmslib is a compiled extension module without stubs
 module = ["nmslib"]
 ignore_missing_imports = true
+
+[tool.uv.sources]
+hannoy.git = "https://github.com/nnethercott/hannoy.git"  # TODO: remove once 0.1.4/0.2 is released
 
 [build-system]
 requires = ["hatchling", "hatch-vcs", "hatch-fancy-pypi-readme"]
