@@ -1,25 +1,38 @@
+from __future__ import annotations
+
 from collections import deque
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 from sklearn.base import BaseEstimator, ClusterMixin
 from sklearn.neighbors import KNeighborsTransformer
-from sklearn.utils import Tags
 from sklearn.utils.validation import validate_data
 
 from ..utils import get_sparse_row
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterator
+    from typing import Any, Literal, Self
+
+    from numpy.typing import NDArray
+    from scipy.sparse import csr_matrix
+    from sklearn.pipeline import Pipeline
+    from sklearn.utils import Tags
+
 
 UNCLASSIFIED = -2
 NOISE = -1
 
 
-def join(it1, it2):
+def join(
+    it1: Iterator[tuple[int, float]], it2: Iterator[tuple[int, float]]
+) -> Iterator[tuple[int, float]]:
     cur_it1 = next(it1, None)
     cur_it2 = next(it2, None)
     while 1:
-        if cur_it1 is None and cur_it2 is None:
-            break
-        elif cur_it1 is None:
+        if cur_it1 is None:
+            if cur_it2 is None:
+                break
             yield cur_it2
             cur_it2 = next(it2, None)
         elif cur_it2 is None:
@@ -37,7 +50,9 @@ def join(it1, it2):
             cur_it2 = next(it2, None)
 
 
-def neighborhood(is_core, knns, rev_knns, idx):
+def neighborhood(
+    is_core: NDArray[np.bool_], knns: csr_matrix, rev_knns: csr_matrix, idx: int
+) -> Iterator[tuple[int, float]]:
     # TODO: Make this inner bit faster
     knn_it = get_sparse_row(knns, idx)
     rev_core_knn_it = (
@@ -52,10 +67,15 @@ def neighborhood(is_core, knns, rev_knns, idx):
     )
 
 
-def rnn_dbscan_inner(is_core, knns, rev_knns, labels):
+def rnn_dbscan_inner(
+    is_core: NDArray[np.bool_],
+    knns: csr_matrix,
+    rev_knns: csr_matrix,
+    labels: NDArray[np.int32],
+) -> list[float]:
     cluster = 0
-    cur_dens = 0
-    dens = []
+    cur_dens = 0.0
+    dens: list[float] = []
     for x_idx in range(len(labels)):
         if labels[x_idx] == UNCLASSIFIED:
             # Expand cluster
@@ -63,7 +83,7 @@ def rnn_dbscan_inner(is_core, knns, rev_knns, labels):
                 labels[x_idx] = cluster
                 # TODO: Make this inner bit faster - can just assume
                 # sorted an keep sorted
-                seeds = deque()
+                seeds: deque[int] = deque()
                 for neighbor_idx, dist in neighborhood(is_core, knns, rev_knns, x_idx):
                     labels[neighbor_idx] = cluster
                     if dist > cur_dens:
@@ -81,7 +101,7 @@ def rnn_dbscan_inner(is_core, knns, rev_knns, labels):
                             elif labels[z_idx] == NOISE:
                                 labels[z_idx] = cluster
                 dens.append(cur_dens)
-                cur_dens = 0
+                cur_dens = 0.0
                 cluster += 1
             else:
                 labels[x_idx] = NOISE
@@ -138,37 +158,42 @@ class RnnDBSCAN(ClusterMixin, BaseEstimator):
     """
 
     def __init__(
-        self, n_neighbors=5, *, input_guarantee="none", n_jobs=None, keep_knns=False
-    ):
+        self,
+        n_neighbors: int = 5,
+        *,
+        input_guarantee: Literal["none", "kneighbors"] = "none",
+        n_jobs: int | None = None,
+        keep_knns: bool = False,
+    ) -> None:
         self.n_neighbors = n_neighbors
         self.input_guarantee = input_guarantee
         self.n_jobs = n_jobs
         self.keep_knns = keep_knns
 
-    def fit(self, X, y=None):
+    def fit(self, X: NDArray[np.float64] | csr_matrix, y: None = None) -> Self:
         X = validate_data(self, X, accept_sparse="csr")
         if self.input_guarantee == "none":
             algorithm = KNeighborsTransformer(n_neighbors=self.n_neighbors)
-            X = algorithm.fit_transform(X)
+            knns = cast("csr_matrix", algorithm.fit_transform(X))
         elif self.input_guarantee == "kneighbors":
-            pass
+            knns = cast("csr_matrix", X)
         else:
             raise ValueError(
                 "Expected input_guarantee to be one of 'none', 'kneighbors'"
             )
 
-        XT = X.transpose().tocsr(copy=True)
+        rev_knns = knns.transpose().tocsr(copy=True)
         if self.keep_knns:
-            self.knns_ = X
-            self.rev_knns_ = XT
+            self.knns_ = knns
+            self.rev_knns_ = rev_knns
 
         # Initially, all samples are unclassified.
-        labels = np.full(X.shape[0], UNCLASSIFIED, dtype=np.int32)
+        labels = np.full(knns.shape[0], UNCLASSIFIED, dtype=np.int32)
 
         # A list of all core samples found. -1 is to account for diagonal.
-        core_samples = XT.getnnz(1) - 1 >= self.n_neighbors
+        core_samples = rev_knns.getnnz(1) - 1 >= self.n_neighbors
 
-        dens = rnn_dbscan_inner(core_samples, X, XT, labels)
+        dens = rnn_dbscan_inner(core_samples, knns, rev_knns, labels)
 
         self.core_sample_indices_ = core_samples.nonzero()
         self.labels_ = labels
@@ -176,46 +201,59 @@ class RnnDBSCAN(ClusterMixin, BaseEstimator):
 
         return self
 
-    def fit_predict(self, X, y=None):
+    def fit_predict(  # type: ignore[override]
+        self, X: NDArray[np.float64] | csr_matrix, y: None = None
+    ) -> NDArray[np.int32]:
         self.fit(X, y=y)
         return self.labels_
 
-    def drop_knns(self):
+    def drop_knns(self) -> None:
         del self.knns_
         del self.rev_knns_
 
     def __sklearn_tags__(self) -> Tags:
-        tags = cast(Tags, super().__sklearn_tags__())
+        tags = cast("Tags", super().__sklearn_tags__())  # type: ignore[no-untyped-call]
         tags.input_tags.sparse = True
         return tags
 
 
 def simple_rnn_dbscan_pipeline(
-    neighbor_transformer, n_neighbors, n_jobs=None, keep_knns=None, **kwargs
-):
+    neighbor_transformer: Callable[..., Any],
+    n_neighbors: int,
+    *,
+    n_jobs: int | None = None,
+    keep_knns: bool = False,
+    input_guarantee: Literal["none", "kneighbors"] = "none",
+) -> Pipeline:
     """
     Create a simple pipeline comprising a transformer and RnnDBSCAN.
 
     Parameters
     ----------
-    neighbor_transformer : class implementing KNeighborsTransformer interface
-    n_neighbors:
+    neighbor_transformer
+        class implementing KNeighborsTransformer interface
+    n_neighbors
         Passed to neighbor_transformer and RnnDBSCAN
-    n_jobs:
+    n_jobs
         Passed to neighbor_transformer and RnnDBSCAN
-    keep_knns:
+    keep_knns
         Passed to RnnDBSCAN
-    kwargs:
-        Passed to neighbor_transformer
+    input_guarantee
+        Passed to RnnDBSCAN
     """
     from sklearn.pipeline import make_pipeline
 
-    return make_pipeline(
-        neighbor_transformer(n_neighbors=n_neighbors, n_jobs=n_jobs, **kwargs),
-        RnnDBSCAN(
-            n_neighbors=n_neighbors,
-            input_guarantee="kneighbors",
-            n_jobs=n_jobs,
-            keep_knns=keep_knns,
+    return cast(
+        "Pipeline",
+        make_pipeline(
+            neighbor_transformer(
+                n_neighbors=n_neighbors, n_jobs=n_jobs, input_guarantee=input_guarantee
+            ),
+            RnnDBSCAN(
+                n_neighbors=n_neighbors,
+                input_guarantee="kneighbors",
+                n_jobs=n_jobs,
+                keep_knns=keep_knns,
+            ),
         ),
     )

@@ -1,18 +1,28 @@
+from __future__ import annotations
+
+from importlib.util import find_spec
+from typing import TYPE_CHECKING
+
 import numpy as np
-import pytest
 
 from sklearn_ann.test_utils import assert_row_close, needs
 
-try:
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+
+    from numpy.typing import NDArray
+
+if TYPE_CHECKING or find_spec("hannoy"):
     from hannoy import Metric
 
     from sklearn_ann.kneighbors.hannoy import HannoyTransformer
-except ImportError:
-    pass
 
 
 @needs.hannoy
-def test_euclidean(random_small, random_small_pdists):
+def test_euclidean(
+    random_small: NDArray[np.float64],
+    random_small_pdists: Mapping[str, NDArray[np.float64]],
+) -> None:
     trans = HannoyTransformer(metric=Metric.EUCLIDEAN)
     mat = trans.fit_transform(random_small)
     euclidean_dist = random_small_pdists["euclidean"]
@@ -20,7 +30,10 @@ def test_euclidean(random_small, random_small_pdists):
 
 
 @needs.hannoy
-def test_cosine(random_small, random_small_pdists):
+def test_cosine(
+    random_small: NDArray[np.float64],
+    random_small_pdists: Mapping[str, NDArray[np.float64]],
+) -> None:
     trans = HannoyTransformer(metric=Metric.COSINE)
     mat = trans.fit_transform(random_small)
     # hannoy's cosine metric returns (1 - cos_sim) / 2
@@ -29,7 +42,7 @@ def test_cosine(random_small, random_small_pdists):
 
 
 @needs.hannoy
-def test_transform_matches_fit_transform(random_small):
+def test_transform_matches_fit_transform(random_small: NDArray[np.float64]) -> None:
     # both entry points go through by_array on the same vectors
     # they should agree exactly;
     trans = HannoyTransformer(metric=Metric.EUCLIDEAN)

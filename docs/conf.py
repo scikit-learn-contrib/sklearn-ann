@@ -3,8 +3,10 @@
 # This file only contains a selection of the most common options. For a full
 # list see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
+from __future__ import annotations
 
 import os
+from pathlib import PurePosixPath
 
 # -- Path setup --------------------------------------------------------------
 
@@ -61,6 +63,6 @@ html_theme_options = dict(
     repository_url="https://github.com/frankier/sklearn-ann",
     repository_branch=os.environ.get("READTHEDOCS_GIT_IDENTIFIER", "main"),
 )
-rtd_links_prefix = "src"
+rtd_links_prefix = PurePosixPath("src")
 
 autodoc_mock_imports = ["annoy", "faiss", "pynndescent", "nmslib"]

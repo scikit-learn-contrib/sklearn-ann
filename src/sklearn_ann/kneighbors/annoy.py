@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, cast
+
 import annoy
 import numpy as np
 from scipy.sparse import csr_matrix
@@ -7,34 +11,50 @@ from sklearn.utils.validation import validate_data
 
 from ..utils import TransformerChecksMixin
 
+if TYPE_CHECKING:
+    from typing import Literal, Self, TypeAlias
+
+    from numpy.typing import ArrayLike, NDArray
+
+    Metric: TypeAlias = Literal[
+        "angular", "euclidean", "manhattan", "hamming", "dot", "sqeuclidean"
+    ]
+
 
 class AnnoyTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator):
     """Wrapper for using annoy.AnnoyIndex as sklearn's KNeighborsTransformer"""
 
-    def __init__(self, n_neighbors=5, *, metric="euclidean", n_trees=10, search_k=-1):
+    def __init__(
+        self,
+        n_neighbors: int = 5,
+        *,
+        metric: Metric = "euclidean",
+        n_trees: int = 10,
+        search_k: int = -1,
+    ) -> None:
         self.n_neighbors = n_neighbors
         self.n_trees = n_trees
         self.search_k = search_k
         self.metric = metric
 
-    def fit(self, X, y=None):
-        X = validate_data(self, X)
+    def fit(self, X: ArrayLike, y: None = None) -> Self:
+        X = cast("NDArray[np.float64]", validate_data(self, X))
         self.n_samples_fit_ = X.shape[0]
-        metric = self.metric if self.metric != "sqeuclidean" else "euclidean"
+        metric = "euclidean" if self.metric == "sqeuclidean" else self.metric
         self.annoy_ = annoy.AnnoyIndex(X.shape[1], metric=metric)
         for i, x in enumerate(X):
             self.annoy_.add_item(i, x.tolist())
         self.annoy_.build(self.n_trees)
         return self
 
-    def transform(self, X):
+    def transform(self, X: NDArray[np.float64]) -> csr_matrix:
         X = self._transform_checks(X, "annoy_")
         return self._transform(X)
 
-    def fit_transform(self, X, y=None):
+    def fit_transform(self, X: ArrayLike, y: None = None) -> csr_matrix:  # type: ignore[override]
         return self.fit(X)._transform(X=None)
 
-    def _transform(self, X):
+    def _transform(self, X: NDArray[np.float64] | None) -> csr_matrix:
         """As `transform`, but handles X is None for faster `fit_transform`."""
 
         n_samples_transform = self.n_samples_fit_ if X is None else X.shape[0]
