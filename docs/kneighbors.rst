@@ -38,6 +38,24 @@ purposes`.
 .. automodule:: sklearn_ann.kneighbors.faiss
    :members:
 
+Hannoy
+------
+
+`Hannoy`_ is a Rust library with Python bindings implementing Hierarchical
+Navigable Small World graphs (HNSW) on top of LMDB, a memory-mapped key-value
+store. Because the index lives on disk instead of in RAM, it can handle
+datasets larger than available memory. It is based on `arroy`_, a Meilisearch
+project, and supports euclidean, cosine, manhattan, and hamming metrics as well
+as incremental insertion and deletion.
+
+.. _`Hannoy`: https://github.com/nnethercott/hannoy
+
+.. _`arroy`: https://github.com/meilisearch/arroy
+
+
+.. automodule:: sklearn_ann.kneighbors.hannoy
+   :members:
+
 nmslib
 ------
 
