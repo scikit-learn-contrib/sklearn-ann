@@ -130,7 +130,7 @@ def test_all_return_diagonal_0(
     # Check: do we alway get an "extra" neighbour (diagonal/self)
     est = estim_cls(n_neighbors=3)
     knns = est.fit_transform(random_small)
-    assert (knns.getnnz(1) == 4).all()
+    assert (np.diff(knns.indptr) == 4).all()
 
     # Check: diagonal is 0
     next_expected_diagonal = 0
@@ -156,5 +156,5 @@ def test_all_same(estim_cls: type[Estimator]) -> None:
     est = estim_cls(n_neighbors=3)
     knns = est.fit_transform(ones)
     print("knns", knns)
-    assert (knns.getnnz(1) == 4).all()
+    assert (np.diff(knns.indptr) == 4).all()
     assert len(knns.nonzero()[0]) == 0
