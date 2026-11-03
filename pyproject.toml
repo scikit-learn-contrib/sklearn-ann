@@ -104,6 +104,7 @@ dependency-groups = ["docs"]
 scripts.build = "sphinx-build -M html docs docs/_build"
 
 [tool.hatch.envs.hatch-check-types]
+python = "3.12"  # nmslib-metabrainz has no wheels for newer Pythons
 features = ["annlibs"]
 dependency-groups = ["tests", "typing"]
 scripts.check = "mypy {args:.}"
