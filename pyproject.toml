@@ -101,7 +101,8 @@ strict = true
 installer = "uv"
 features = ["annlibs"]
 dependency-groups = ["docs"]
-scripts.build = "sphinx-build -M html docs docs/_build"
+scripts.build = "sphinx-build -M html docs docs/_build -W"
+scripts.clean = "git clean -fdX -- {args:docs}"
 
 [tool.hatch.envs.hatch-check-types]
 python = "3.12"  # nmslib-metabrainz has no wheels for newer Pythons
