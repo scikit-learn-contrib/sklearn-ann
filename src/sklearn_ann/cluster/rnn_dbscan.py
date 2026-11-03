@@ -191,7 +191,7 @@ class RnnDBSCAN(ClusterMixin, BaseEstimator):
         labels = np.full(knns.shape[0], UNCLASSIFIED, dtype=np.int32)
 
         # A list of all core samples found. -1 is to account for diagonal.
-        core_samples = rev_knns.getnnz(1) - 1 >= self.n_neighbors
+        core_samples = np.diff(rev_knns.indptr) - 1 >= self.n_neighbors
 
         dens = rnn_dbscan_inner(core_samples, knns, rev_knns, labels)
 
