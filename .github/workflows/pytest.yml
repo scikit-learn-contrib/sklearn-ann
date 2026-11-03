@@ -27,22 +27,16 @@ jobs:
         with:
           enable-cache: true
 
-      - &hatch
-        name: Install Hatch
-        # https://github.com/pypa/hatch/pull/2351
-        run: uv tool install git+https://github.com/pypa/hatch.git@af5339a1a5bb8e6d4b659c4c1bfff8e7e37cdaff
-
       - name: Run test suite
-        run: hatch test -py ${{ matrix.python-version }} -v --color=yes
+        run: uvx hatch test -py ${{ matrix.python-version }} -v --color=yes
 
   types:
     runs-on: ubuntu-latest
     steps:
       - *clone
       - *uv
-      - *hatch
       - name: Type check
-        run: hatch check types
+        run: uvx hatch check types
 
   build:
     runs-on: ubuntu-latest

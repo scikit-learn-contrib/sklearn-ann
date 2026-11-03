@@ -1,4 +1,4 @@
-# This file configures editors, IDEs, and prettier
+# This file configures editors, IDEs, and biome
 
 root = true
 
