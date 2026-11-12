@@ -45,6 +45,7 @@ class needs(Enum):
 
     annoy = ("annoy",)
     faiss = ("faiss-cpu", "faiss-gpu")
+    mlxvs = ("mlxvs",)
     nmslib = ("nmslib",)
     pynndescent = ("pynndescent",)
 
