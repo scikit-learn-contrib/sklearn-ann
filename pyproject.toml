@@ -142,6 +142,11 @@ no_implicit_reexport = false
 module = ["nmslib"]
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+# mlxvs only installs on macOS on Apple silicon
+module = ["mlxvs"]
+ignore_missing_imports = true
+
 [build-system]
 requires = ["hatchling", "hatch-vcs", "hatch-fancy-pypi-readme"]
 build-backend = "hatchling.build"
