@@ -38,6 +38,21 @@ purposes`.
 .. automodule:: sklearn_ann.kneighbors.faiss
    :members:
 
+mlxvs
+-----
+
+`mlxvs`_ runs nearest neighbor search on the GPU of Apple silicon Macs, through
+Apple's MLX. Small inputs get the exact neighbors (a matrix multiply and a top-k
+on the GPU); larger ones get approximate neighbors from NN-Descent kNN graphs and
+from a CAGRA graph index, the graph search NVIDIA's cuVS uses. It needs macOS 14
+or later on Apple silicon.
+
+.. _`mlxvs`: https://github.com/mikepapadim/mlxvs
+
+
+.. automodule:: sklearn_ann.kneighbors.mlxvs
+   :members:
+
 nmslib
 ------
 
