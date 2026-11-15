@@ -12,16 +12,17 @@ from sklearn_ann.test_utils import needs
 
 if not TYPE_CHECKING:
     AnnoyTransformer = FAISSTransformer = NMSlibTransformer = None
-    PyNNDescentTransformer = KNeighborsTransformer = None
+    HannoyTransformer = PyNNDescentTransformer = KNeighborsTransformer = None
 if find_spec("annoy") or TYPE_CHECKING:
     from sklearn_ann.kneighbors.annoy import AnnoyTransformer
 if find_spec("faiss") or TYPE_CHECKING:
     from sklearn_ann.kneighbors.faiss import FAISSTransformer
+if find_spec("hannoy") or TYPE_CHECKING:
+    from sklearn_ann.kneighbors.hannoy import HannoyTransformer
 if find_spec("nmslib") or TYPE_CHECKING:
     from sklearn_ann.kneighbors.nmslib import NMSlibTransformer
 if find_spec("pynndescent") or TYPE_CHECKING:
     from sklearn_ann.kneighbors.pynndescent import PyNNDescentTransformer
-
 from sklearn_ann.kneighbors.sklearn import BallTreeTransformer, KDTreeTransformer
 
 if TYPE_CHECKING:
@@ -41,6 +42,7 @@ ESTIMATORS: list[ParameterSet] = [
     pytest.param(FAISSTransformer, marks=[needs.faiss()]),
     pytest.param(NMSlibTransformer, marks=[needs.nmslib()]),
     pytest.param(PyNNDescentTransformer, marks=[needs.pynndescent()]),
+    pytest.param(HannoyTransformer, marks=[needs.hannoy()]),
     pytest.param(BallTreeTransformer),
     pytest.param(KDTreeTransformer),
 ]
@@ -57,6 +59,9 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         check_methods_subset_invariance="Unable to reset FAISS internal RNG",
     ),
     NMSlibTransformer: dict(check_estimators_pickle="Cannot pickle NMSLib index"),
+    HannoyTransformer: dict(
+        check_estimators_pickle="Cannot pickle hannoy Reader (Rust unsendable)"
+    ),
 }
 
 
