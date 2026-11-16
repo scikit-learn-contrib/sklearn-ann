@@ -11,6 +11,7 @@ urls.Documentation = "https://sklearn-ann.readthedocs.io/"
 dynamic = ["version", "readme"]
 requires-python = ">=3.13"
 dependencies = [
+    "numpy>=2.2",
     "scikit-learn>=1.6.0",
     "scipy>=1.15,<2.0.0",
 ]
@@ -43,7 +44,7 @@ docs = [
     "sphinx-book-theme>=1.1.0",
     "sphinx-issues>=1.2.0",
     "numpydoc>=1.1.0",
-    "matplotlib>=3.3.3",
+    "matplotlib>=3.10",
     "scanpydoc",
 ]
 tests = [
