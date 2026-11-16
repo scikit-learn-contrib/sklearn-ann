@@ -11,12 +11,14 @@ from sklearn.utils.estimator_checks import check_estimator
 from sklearn_ann.test_utils import needs
 
 if not TYPE_CHECKING:
-    AnnoyTransformer = FAISSTransformer = NMSlibTransformer = None
+    AnnoyTransformer = FAISSTransformer = MLXVSTransformer = NMSlibTransformer = None
     PyNNDescentTransformer = KNeighborsTransformer = None
 if find_spec("annoy") or TYPE_CHECKING:
     from sklearn_ann.kneighbors.annoy import AnnoyTransformer
 if find_spec("faiss") or TYPE_CHECKING:
     from sklearn_ann.kneighbors.faiss import FAISSTransformer
+if find_spec("mlxvs") or TYPE_CHECKING:
+    from sklearn_ann.kneighbors.mlxvs import MLXVSTransformer
 if find_spec("nmslib") or TYPE_CHECKING:
     from sklearn_ann.kneighbors.nmslib import NMSlibTransformer
 if find_spec("pynndescent") or TYPE_CHECKING:
@@ -31,6 +33,7 @@ if TYPE_CHECKING:
 Estimator = (
     AnnoyTransformer
     | FAISSTransformer
+    | MLXVSTransformer
     | NMSlibTransformer
     | PyNNDescentTransformer
     | KNeighborsTransformer
@@ -39,6 +42,7 @@ Estimator = (
 ESTIMATORS: list[ParameterSet] = [
     pytest.param(AnnoyTransformer, marks=[needs.annoy()]),
     pytest.param(FAISSTransformer, marks=[needs.faiss()]),
+    pytest.param(MLXVSTransformer, marks=[needs.mlxvs()]),
     pytest.param(NMSlibTransformer, marks=[needs.nmslib()]),
     pytest.param(PyNNDescentTransformer, marks=[needs.pynndescent()]),
     pytest.param(BallTreeTransformer),

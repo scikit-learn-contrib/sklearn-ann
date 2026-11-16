@@ -65,4 +65,4 @@ html_theme_options = dict(
 )
 rtd_links_prefix = PurePosixPath("src")
 
-autodoc_mock_imports = ["annoy", "faiss", "pynndescent", "nmslib"]
+autodoc_mock_imports = ["annoy", "faiss", "mlxvs", "pynndescent", "nmslib"]
