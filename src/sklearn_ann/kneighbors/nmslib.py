@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from typing import Self
 
     from numpy.typing import ArrayLike, NDArray
-    from scipy.sparse import csr_matrix
+    from scipy.sparse import csr_array
 
 # see more metric in the manual
 # https://github.com/nmslib/nmslib/tree/master/manual
@@ -55,17 +55,17 @@ class NMSlibTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator)
         self.nmslib_.createIndex()
         return self
 
-    def transform(self, X: NDArray[np.float64]) -> csr_matrix:
+    def transform(self, X: NDArray[np.float64]) -> csr_array:
         X = self._transform_checks(X, "nmslib_")
         return self._transform(X)
 
-    def fit_transform(self, X: ArrayLike, y: None = None) -> csr_matrix:  # type: ignore[override]
+    def fit_transform(self, X: ArrayLike, y: None = None) -> csr_array:  # type: ignore[override]
         X = cast("NDArray[np.float64]", validate_data(self, X))
         return self.fit(X)._transform(X, self_rows=True)
 
     def _transform(
         self, X: NDArray[np.float64], *, self_rows: bool = False
-    ) -> csr_matrix:
+    ) -> csr_array:
         # For compatibility reasons, as each sample is considered as its own
         # neighbor, one extra neighbor will be computed.
         n_neighbors = self.n_neighbors + 1

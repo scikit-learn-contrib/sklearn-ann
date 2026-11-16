@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from typing import Literal, Self
 
     from numpy.typing import ArrayLike, NDArray
-    from scipy.sparse import csr_matrix
+    from scipy.sparse import csr_array
 
     type Metric = Literal[
         "angular", "euclidean", "manhattan", "hamming", "dot", "sqeuclidean"
@@ -47,14 +47,14 @@ class AnnoyTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator):
         self.annoy_.build(self.n_trees)
         return self
 
-    def transform(self, X: NDArray[np.float64]) -> csr_matrix:
+    def transform(self, X: NDArray[np.float64]) -> csr_array:
         X = self._transform_checks(X, "annoy_")
         return self._transform(X)
 
-    def fit_transform(self, X: ArrayLike, y: None = None) -> csr_matrix:  # type: ignore[override]
+    def fit_transform(self, X: ArrayLike, y: None = None) -> csr_array:  # type: ignore[override]
         return self.fit(X)._transform(X=None)
 
-    def _transform(self, X: NDArray[np.float64] | None) -> csr_matrix:
+    def _transform(self, X: NDArray[np.float64] | None) -> csr_array:
         """As `transform`, but handles X is None for faster `fit_transform`."""
 
         n_samples_transform = self.n_samples_fit_ if X is None else X.shape[0]

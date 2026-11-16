@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from typing import Literal, Self
 
     from numpy.typing import ArrayLike, NDArray
-    from scipy.sparse import csr_matrix
+    from scipy.sparse import csr_array
 
 
 METRIC_MAP: dict[str, MetricInfo[str]] = {
@@ -114,7 +114,7 @@ class MLXVSTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator):
         self._index = None
         return self
 
-    def transform(self, X: ArrayLike) -> csr_matrix:
+    def transform(self, X: ArrayLike) -> csr_array:
         X = cast(
             "NDArray[np.float32]",
             self._transform_checks(X, "fit_X_", dtype=np.float32),
@@ -129,7 +129,7 @@ class MLXVSTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator):
             )
         return self._to_csr(np.asarray(ids), np.asarray(dist))
 
-    def fit_transform(self, X: ArrayLike, y: None = None) -> csr_matrix:  # type: ignore[override]
+    def fit_transform(self, X: ArrayLike, y: None = None) -> csr_array:  # type: ignore[override]
         self.fit(X)
         n = self.n_samples_fit_
         k = min(self.n_neighbors + 1, n)
@@ -167,7 +167,7 @@ class MLXVSTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator):
         dist: NDArray[np.float32],
         *,
         self_rows: bool = False,
-    ) -> csr_matrix:
+    ) -> csr_array:
         info = self._metric_info
         mat = knn_csr(
             ids,

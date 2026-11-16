@@ -42,11 +42,12 @@ def test_graph_recall() -> None:
     exact = MLXVSTransformer(n_neighbors=10, algorithm="brute").fit_transform(x)
     approx = MLXVSTransformer(n_neighbors=10, algorithm="graph").fit_transform(x)
     hits = [
-        len(set(exact[i].indices) & set(approx[i].indices)) / 11
+        len(set(exact[i].coords[0]) & set(approx[i].coords[0])) / 11
         for i in range(0, 20000, 7)
     ]
     assert np.mean(hits) > 0.95
     trans = MLXVSTransformer(n_neighbors=10, algorithm="graph").fit(x)
     queries = trans.transform(x[:500])
     # each fitted row is its own nearest neighbor
-    assert all(queries[i].indices[np.argmin(queries[i].data)] == i for i in range(500))
+    rows = [queries[i] for i in range(500)]
+    assert all(r.coords[0][np.argmin(r.data)] == i for i, r in enumerate(rows))

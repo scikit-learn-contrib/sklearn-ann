@@ -2,7 +2,7 @@ Implementations of the KNeighborsTransformer interface
 ======================================================
 
 This module contains transformers which transform from array-like structures of
-shape (n_samples, n_features) to KNN-graphs encoded as scipy.sparse.csr_matrix.
+shape (n_samples, n_features) to KNN-graphs encoded as :class:`scipy.sparse.csr_array`.
 They conform to the KNeighborsTransformer interface. Each submodule in this
 module provides facilities for exactly one external nearest neighbour library.
 

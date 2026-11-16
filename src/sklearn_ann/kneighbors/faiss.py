@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     from typing import Self
 
     from numpy.typing import ArrayLike, NDArray
-    from scipy.sparse import csr_matrix
+    from scipy.sparse import csr_array
 
 
 L2_INFO = MetricInfo(faiss.METRIC_L2, sqrt=True)
@@ -113,7 +113,7 @@ class FAISSTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator):
         )
         return self
 
-    def transform(self, X: NDArray[np.number]) -> csr_matrix:
+    def transform(self, X: NDArray[np.number]) -> csr_array:
         normalize = self._metric_info.normalize
         X = cast(
             "NDArray[np.float32]",
@@ -123,7 +123,7 @@ class FAISSTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator):
             normalize_L2(X)
         return self._transform(X)
 
-    def _transform(self, X: NDArray[np.float32] | None) -> csr_matrix:
+    def _transform(self, X: NDArray[np.float32] | None) -> csr_array:
         n_neighbors = self.n_neighbors + 1
         if X is None:
             # only flat indices store their vectors, i.e. `index_key` has to be empty
@@ -151,7 +151,7 @@ class FAISSTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator):
             mat, include_fwd=self.include_fwd, include_rev=self.include_rev
         )
 
-    def fit_transform(self, X: ArrayLike, y: None = None) -> csr_matrix:  # type: ignore[override]
+    def fit_transform(self, X: ArrayLike, y: None = None) -> csr_array:  # type: ignore[override]
         return self.fit(X, y=y)._transform(X=None)
 
     def __sklearn_tags__(self) -> Tags:
