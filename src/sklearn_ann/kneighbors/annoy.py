@@ -4,17 +4,17 @@ from typing import TYPE_CHECKING, cast
 
 import annoy
 import numpy as np
-from scipy.sparse import csr_matrix
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils import Tags, TargetTags, TransformerTags
 from sklearn.utils.validation import validate_data
 
-from ..utils import TransformerChecksMixin
+from ..utils import TransformerChecksMixin, knn_csr
 
 if TYPE_CHECKING:
     from typing import Literal, Self, TypeAlias
 
     from numpy.typing import ArrayLike, NDArray
+    from scipy.sparse import csr_matrix
 
     Metric: TypeAlias = Literal[
         "angular", "euclidean", "manhattan", "hamming", "dot", "sqeuclidean"
@@ -63,32 +63,26 @@ class AnnoyTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator):
         # neighbor, one extra neighbor will be computed.
         n_neighbors = self.n_neighbors + 1
 
-        indices = np.empty((n_samples_transform, n_neighbors), dtype=int)
-        distances = np.empty((n_samples_transform, n_neighbors))
+        # -1: the index found fewer neighbors
+        indices = np.full((n_samples_transform, n_neighbors), -1)
+        distances = np.zeros((n_samples_transform, n_neighbors))
 
-        if X is None:
-            for i in range(self.annoy_.get_n_items()):
-                ind, dist = self.annoy_.get_nns_by_item(
+        for i in range(n_samples_transform):
+            ind, dist = (
+                self.annoy_.get_nns_by_item(
                     i, n_neighbors, self.search_k, include_distances=True
                 )
-
-                indices[i], distances[i] = ind, dist
-        else:
-            for i, x in enumerate(X):
-                indices[i], distances[i] = self.annoy_.get_nns_by_vector(
-                    x.tolist(), n_neighbors, self.search_k, include_distances=True
+                if X is None
+                else self.annoy_.get_nns_by_vector(
+                    X[i].tolist(), n_neighbors, self.search_k, include_distances=True
                 )
+            )
+            indices[i, : len(ind)], distances[i, : len(dist)] = ind, dist
 
         if self.metric == "sqeuclidean":
             distances **= 2
 
-        indptr = np.arange(0, n_samples_transform * n_neighbors + 1, n_neighbors)
-        kneighbors_graph = csr_matrix(
-            (distances.ravel(), indices.ravel(), indptr),
-            shape=(n_samples_transform, self.n_samples_fit_),
-        )
-
-        return kneighbors_graph
+        return knn_csr(indices, distances, self.n_samples_fit_, self_rows=X is None)
 
     def __sklearn_tags__(self) -> Tags:
         return Tags(

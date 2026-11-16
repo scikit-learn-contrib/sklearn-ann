@@ -65,13 +65,13 @@ content-type = "text/x-rst"
 path = "README.rst"
 start-after = ".. inclusion-marker-do-not-remove\n\n"
 
-[tool.pytest.ini_options]
+[tool.pytest]
 addopts = [
     "--import-mode=importlib",
 ]
 # Flaky tests should be marked as xfail(strict=False),
 # this will notify us when a test considered broken starts succeeding.
-xfail_strict = true
+strict = true
 
 [tool.ruff.lint]
 select = [

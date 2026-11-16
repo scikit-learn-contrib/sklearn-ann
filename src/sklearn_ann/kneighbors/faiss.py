@@ -7,17 +7,17 @@ import faiss
 import numpy as np
 from faiss import normalize_L2
 from joblib import cpu_count
-from scipy.sparse import csr_matrix
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils import Tags, TargetTags, TransformerTags
 from sklearn.utils.validation import validate_data
 
-from ..utils import TransformerChecksMixin, postprocess_knn_csr
+from ..utils import TransformerChecksMixin, knn_csr, postprocess_knn_csr
 
 if TYPE_CHECKING:
     from typing import Self
 
     from numpy.typing import ArrayLike, NDArray
+    from scipy.sparse import csr_matrix
 
 
 class MetricInfo(NamedTuple):
@@ -128,7 +128,6 @@ class FAISSTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator):
         return self._transform(X)
 
     def _transform(self, X: NDArray[np.float32] | None) -> csr_matrix:
-        n_samples_transform = self.n_samples_fit_ if X is None else X.shape[0]
         n_neighbors = self.n_neighbors + 1
         if X is None:
             # only flat indices store their vectors, i.e. `index_key` has to be empty
@@ -144,35 +143,13 @@ class FAISSTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator):
             )
         else:
             sims, nbrs = self.faiss_.search(X, k=n_neighbors)
-        dist_arr = np.array(sims, dtype=np.float32)
-        if self._metric_info.sqrt:
-            dist_arr = np.sqrt(dist_arr)
-        if self._metric_info.negate:
-            dist_arr = 1 - dist_arr
-        del sims
-        nbr_arr = np.array(nbrs, dtype=np.int32)
-        del nbrs
-        indptr = np.arange(0, n_samples_transform * n_neighbors + 1, n_neighbors)
-        """
-        dist_arr = np.concatenate(
-            [
-                np.zeros(
-                    (n_samples_transform, 1),
-                    dtype=dist_arr.dtype
-                ),
-                dist_arr
-            ], axis=1
-        )
-        nbr_arr = np.concatenate(
-            [
-                np.arange(n_samples_transform)[:, np.newaxis],
-                nbr_arr
-            ], axis=1
-        )
-        """
-        mat = csr_matrix(
-            (dist_arr.ravel(), nbr_arr.ravel(), indptr),
-            shape=(n_samples_transform, self.n_samples_fit_),
+        mat = knn_csr(
+            nbrs,
+            sims,
+            self.n_samples_fit_,
+            negate=self._metric_info.negate,
+            sqrt=self._metric_info.sqrt,
+            self_rows=X is None,
         )
         return postprocess_knn_csr(
             mat, include_fwd=self.include_fwd, include_rev=self.include_rev

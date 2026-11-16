@@ -10,6 +10,8 @@ if TYPE_CHECKING:
     from collections.abc import Container, Iterator
     from typing import TypeVar
 
+    from numpy.typing import NDArray
+
     T = TypeVar("T")
 
 
@@ -75,6 +77,48 @@ def or_else_csrs(csr1: csr_matrix, csr2: csr_matrix) -> csr_matrix:
             data.append(cur_datum)
     indptr[-1] = len(indices)
     return csr_matrix((data, indices, indptr), shape=csr1.shape)
+
+
+def knn_csr(
+    ids: NDArray[np.integer],
+    dist: NDArray[np.floating],
+    n_cols: int,
+    *,
+    negate: bool = False,
+    sqrt: bool = False,
+    self_rows: bool = False,
+) -> csr_matrix:
+    """Build a kNN graph from each row's neighbor ``ids`` and distances ``dist``.
+
+    Distances become ``1 - dist`` with ``negate`` (similarities),
+    are clipped to be non-negative (float error),
+    and become ``sqrt(dist)`` with ``sqrt``.
+    Neighbors with id ``-1`` (not found by the index) are dropped.
+
+    With ``self_rows``, row ``i`` was queried with fitted row ``i``:
+    it becomes the row's first neighbor with distance exactly 0
+    (replacing the furthest neighbor if the index missed it, dropping it if repeated),
+    as :class:`~sklearn.neighbors.KNeighborsTransformer`'s ``fit_transform`` does.
+    """
+    if negate:
+        dist = 1 - dist
+    dist = np.maximum(dist, 0)
+    if sqrt:
+        dist = np.sqrt(dist)
+    if self_rows:
+        rows = np.arange(len(ids))[:, None]
+        own = ids == rows
+        ids = ids.copy()
+        ids[own & (np.cumsum(own, axis=1) > 1)] = -1  # no duplicate self entries
+        missing = ~own.any(axis=1)
+        ids[missing, -1] = rows[missing, 0]
+        order = np.argsort(ids != rows, axis=1, kind="stable")
+        ids = np.take_along_axis(ids, order, axis=1)
+        dist = np.take_along_axis(dist, order, axis=1)
+        dist[:, 0] = 0
+    valid = ids >= 0
+    indptr = np.concatenate([[0], np.cumsum(valid.sum(axis=1))])
+    return csr_matrix((dist[valid], ids[valid], indptr), shape=(len(ids), n_cols))
 
 
 def postprocess_knn_csr(

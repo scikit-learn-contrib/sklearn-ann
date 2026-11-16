@@ -6,17 +6,17 @@ from typing import TYPE_CHECKING, NamedTuple, cast
 
 import mlxvs
 import numpy as np
-from scipy.sparse import csr_matrix
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils import Tags, TargetTags, TransformerTags
 from sklearn.utils.validation import validate_data
 
-from ..utils import TransformerChecksMixin, postprocess_knn_csr
+from ..utils import TransformerChecksMixin, knn_csr, postprocess_knn_csr
 
 if TYPE_CHECKING:
     from typing import Literal, Self
 
     from numpy.typing import ArrayLike, NDArray
+    from scipy.sparse import csr_matrix
 
 
 class MetricInfo(NamedTuple):
@@ -128,7 +128,7 @@ class MLXVSTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator):
             ids, dist = self._graph_index().search(
                 X, k, itopk_size=max(self.itopk_size, k)
             )
-        return self._to_csr(np.asarray(ids), np.asarray(dist), X.shape[0])
+        return self._to_csr(np.asarray(ids), np.asarray(dist))
 
     def fit_transform(self, X: ArrayLike, y: None = None) -> csr_matrix:  # type: ignore[override]
         self.fit(X)
@@ -139,16 +139,15 @@ class MLXVSTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator):
             ids, dist = mlxvs.brute_force_knn(self.fit_X_, self.fit_X_, k, metric)
             ids, dist = np.asarray(ids), np.asarray(dist)
         else:
-            # every row's k - 1 nearest other rows, then the row itself first
+            # every row's k - 1 nearest other rows, plus a column for the row itself
             others, odist = mlxvs.all_neighbors(self.fit_X_, k - 1, metric)
             ids = np.concatenate(
                 [np.arange(n, dtype=np.int32)[:, None], np.asarray(others)], axis=1
             )
-            self_dist = 1.0 if metric == "cosine" else 0.0
             dist = np.concatenate(
-                [np.full((n, 1), self_dist, np.float32), np.asarray(odist)], axis=1
+                [np.zeros((n, 1), np.float32), np.asarray(odist)], axis=1
             )
-        return self._to_csr(ids, dist, n, self_rows=True)
+        return self._to_csr(ids, dist, self_rows=True)
 
     def _graph_index(self) -> mlxvs.CagraIndex:
         index = self._index
@@ -167,35 +166,17 @@ class MLXVSTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator):
         self,
         ids: NDArray[np.int32],
         dist: NDArray[np.float32],
-        n_rows: int,
         *,
         self_rows: bool = False,
     ) -> csr_matrix:
         info = self._metric_info
-        dist = dist.astype(np.float32)
-        if info.negate:
-            dist = 1.0 - dist
-        dist = np.maximum(dist, 0.0)
-        if info.sqrt:
-            dist = np.sqrt(dist)
-        if self_rows:
-            # each row's own entry first and exactly 0, as KNeighborsTransformer
-            rows = np.arange(n_rows)[:, None]
-            own = ids == rows
-            missing = ~own.any(axis=1)
-            ids = ids.copy()
-            ids[missing, -1] = rows[missing, 0]
-            own = ids == rows
-            order = np.argsort(~own, axis=1, kind="stable")
-            ids = np.take_along_axis(ids, order, axis=1)
-            dist = np.take_along_axis(dist, order, axis=1)
-            dist[:, 0] = 0.0
-        # rows with fewer neighbors than requested (-1 ids) keep only the found
-        valid = ids >= 0
-        indptr = np.concatenate([[0], np.cumsum(valid.sum(axis=1))])
-        mat = csr_matrix(
-            (dist[valid], ids[valid], indptr),
-            shape=(n_rows, self.n_samples_fit_),
+        mat = knn_csr(
+            ids,
+            dist.astype(np.float32),
+            self.n_samples_fit_,
+            negate=info.negate,
+            sqrt=info.sqrt,
+            self_rows=self_rows,
         )
         return postprocess_knn_csr(
             mat, include_fwd=self.include_fwd, include_rev=self.include_rev
