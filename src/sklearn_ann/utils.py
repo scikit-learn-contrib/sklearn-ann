@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
 
 import numpy as np
 from scipy.sparse import csr_matrix
@@ -13,6 +13,18 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
     T = TypeVar("T")
+
+
+class MetricInfo[M](NamedTuple):
+    """An index's metric ``M``, and how to make its results distances.
+
+    See :func:`knn_csr` for ``negate`` and ``sqrt``.
+    """
+
+    metric: M
+    normalize: bool = False
+    negate: bool = False
+    sqrt: bool = False
 
 
 def check_metric(metric: str, metrics: Container[str]) -> None:
@@ -87,6 +99,7 @@ def knn_csr(
     negate: bool = False,
     sqrt: bool = False,
     self_rows: bool = False,
+    is_distance: bool = True,
 ) -> csr_matrix:
     """Build a kNN graph from each row's neighbor ``ids`` and distances ``dist``.
 
@@ -99,13 +112,17 @@ def knn_csr(
     it becomes the row's first neighbor with distance exactly 0
     (replacing the furthest neighbor if the index missed it, dropping it if repeated),
     as :class:`~sklearn.neighbors.KNeighborsTransformer`'s ``fit_transform`` does.
+
+    ``is_distance=False`` is for metrics that aren't distances (e.g. similarities):
+    then ``dist`` stays as it is, there's no clipping and no ``self_rows``.
     """
     if negate:
         dist = 1 - dist
-    dist = np.maximum(dist, 0)
+    if is_distance:
+        dist = np.maximum(dist, 0)
     if sqrt:
         dist = np.sqrt(dist)
-    if self_rows:
+    if self_rows and is_distance:
         rows = np.arange(len(ids))[:, None]
         own = ids == rows
         ids = ids.copy()

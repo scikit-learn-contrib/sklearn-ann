@@ -52,6 +52,13 @@ def test_knn_csr_self_rows() -> None:
     mat = knn_csr(ids, dist, 5, self_rows=True)
     np.testing.assert_array_equal(mat.indptr, [0, 3, 6, 9, 11, 13])
     np.testing.assert_array_equal(mat.indices, [0, 1, 2, 1, 0, 2, 2, 0, 1, 3, 0, 4, 0])
-    np.testing.assert_array_equal(
-        mat.data, [0, 1, 2, 0, 0, 2, 0, 1, 2, 0, 1, 0, 1]
-    )
+    np.testing.assert_array_equal(mat.data, [0, 1, 2, 0, 0, 2, 0, 1, 2, 0, 1, 0, 1])
+
+
+def test_knn_csr_not_distance() -> None:
+    ids = np.array([[1, 0], [-1, 0]])
+    dist = np.array([[-3.0, -1.0], [9.0, -2.0]])
+    mat = knn_csr(ids, dist, 2, self_rows=True, is_distance=False)
+    np.testing.assert_array_equal(mat.indptr, [0, 2, 3])
+    np.testing.assert_array_equal(mat.indices, [1, 0, 0])
+    np.testing.assert_array_equal(mat.data, [-3.0, -1.0, -2.0])

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING, NamedTuple, cast
+from typing import TYPE_CHECKING, cast
 
 import faiss
 import numpy as np
@@ -11,7 +11,12 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils import Tags, TargetTags, TransformerTags
 from sklearn.utils.validation import validate_data
 
-from ..utils import TransformerChecksMixin, knn_csr, postprocess_knn_csr
+from ..utils import (
+    MetricInfo,
+    TransformerChecksMixin,
+    knn_csr,
+    postprocess_knn_csr,
+)
 
 if TYPE_CHECKING:
     from typing import Self
@@ -20,17 +25,10 @@ if TYPE_CHECKING:
     from scipy.sparse import csr_matrix
 
 
-class MetricInfo(NamedTuple):
-    metric: int
-    normalize: bool = False
-    negate: bool = False
-    sqrt: bool = False
-
-
 L2_INFO = MetricInfo(faiss.METRIC_L2, sqrt=True)
 
 
-METRIC_MAP: dict[str, MetricInfo] = {
+METRIC_MAP: dict[str, MetricInfo[int]] = {
     "cosine": MetricInfo(faiss.METRIC_INNER_PRODUCT, normalize=True, negate=True),
     "l1": MetricInfo(faiss.METRIC_L1),
     "cityblock": MetricInfo(faiss.METRIC_L1),
@@ -40,7 +38,8 @@ METRIC_MAP: dict[str, MetricInfo] = {
     "sqeuclidean": MetricInfo(faiss.METRIC_L2),
     "canberra": MetricInfo(faiss.METRIC_Canberra),
     "braycurtis": MetricInfo(faiss.METRIC_BrayCurtis),
-    "jensenshannon": MetricInfo(faiss.METRIC_JensenShannon),
+    # FAISS returns the divergence, the distance is its square root
+    "jensenshannon": MetricInfo(faiss.METRIC_JensenShannon, sqrt=True),
 }
 
 
@@ -53,10 +52,7 @@ def mk_faiss_index(
     size, dim = feats.shape
     index: faiss.Index
     if not index_key:
-        if inner_metric == faiss.METRIC_INNER_PRODUCT:
-            index = faiss.IndexFlatIP(dim)
-        else:
-            index = faiss.IndexFlatL2(dim)
+        index = faiss.IndexFlat(dim, inner_metric)
     else:
         if index_key.find("HNSW") < 0:
             raise NotImplementedError(
@@ -95,7 +91,7 @@ class FAISSTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator):
         self.include_rev = include_rev
 
     @property
-    def _metric_info(self) -> MetricInfo:
+    def _metric_info(self) -> MetricInfo[int]:
         return METRIC_MAP[self.metric]
 
     def fit(self, X: ArrayLike, y: None = None) -> Self:

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, NamedTuple, cast
+from typing import TYPE_CHECKING, cast
 
 import mlxvs
 import numpy as np
@@ -10,7 +10,12 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils import Tags, TargetTags, TransformerTags
 from sklearn.utils.validation import validate_data
 
-from ..utils import TransformerChecksMixin, knn_csr, postprocess_knn_csr
+from ..utils import (
+    MetricInfo,
+    TransformerChecksMixin,
+    knn_csr,
+    postprocess_knn_csr,
+)
 
 if TYPE_CHECKING:
     from typing import Literal, Self
@@ -19,13 +24,7 @@ if TYPE_CHECKING:
     from scipy.sparse import csr_matrix
 
 
-class MetricInfo(NamedTuple):
-    metric: str
-    sqrt: bool = False
-    negate: bool = False
-
-
-METRIC_MAP: dict[str, MetricInfo] = {
+METRIC_MAP: dict[str, MetricInfo[str]] = {
     "euclidean": MetricInfo("l2", sqrt=True),
     "l2": MetricInfo("l2", sqrt=True),
     "sqeuclidean": MetricInfo("l2"),
@@ -91,7 +90,7 @@ class MLXVSTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator):
         self.include_rev = include_rev
 
     @property
-    def _metric_info(self) -> MetricInfo:
+    def _metric_info(self) -> MetricInfo[str]:
         return METRIC_MAP[self.metric]
 
     def _exact(self) -> bool:

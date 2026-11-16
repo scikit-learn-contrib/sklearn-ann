@@ -25,7 +25,14 @@ class PyNNDescentTransformer(PyNNDescentTransformerBase):
     def fit_transform(self, X: ArrayLike, y: None = None) -> csr_matrix:  # type: ignore[override]
         self.fit(X, compress_index=False)
         ids, dist = self.index_.neighbor_graph
-        return knn_csr(ids, dist, self.n_samples_fit, self_rows=True)
+        return knn_csr(
+            ids,
+            dist,
+            self.n_samples_fit,
+            self_rows=True,
+            # -<x, y>: negative, and rows aren't their own nearest neighbors
+            is_distance=self.metric != "inner_product",
+        )
 
 
 __all__ = ["PyNNDescentTransformer"]

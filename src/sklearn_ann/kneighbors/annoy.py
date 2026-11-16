@@ -11,12 +11,12 @@ from sklearn.utils.validation import validate_data
 from ..utils import TransformerChecksMixin, knn_csr
 
 if TYPE_CHECKING:
-    from typing import Literal, Self, TypeAlias
+    from typing import Literal, Self
 
     from numpy.typing import ArrayLike, NDArray
     from scipy.sparse import csr_matrix
 
-    Metric: TypeAlias = Literal[
+    type Metric = Literal[
         "angular", "euclidean", "manhattan", "hamming", "dot", "sqeuclidean"
     ]
 
@@ -82,7 +82,13 @@ class AnnoyTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator):
         if self.metric == "sqeuclidean":
             distances **= 2
 
-        return knn_csr(indices, distances, self.n_samples_fit_, self_rows=X is None)
+        return knn_csr(
+            indices,
+            distances,
+            self.n_samples_fit_,
+            self_rows=X is None,
+            is_distance=self.metric != "dot",  # dot: similarities
+        )
 
     def __sklearn_tags__(self) -> Tags:
         return Tags(
