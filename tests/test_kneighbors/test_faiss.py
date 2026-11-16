@@ -2,12 +2,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sklearn_ann.test_utils import assert_row_close, needs
+import numpy as np
+import pytest
+from scipy.spatial.distance import cdist
+
+from sklearn_ann.test_utils import needs
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
+    from typing import Literal
 
-    import numpy as np
     from numpy.typing import NDArray
 
 try:
@@ -17,22 +20,42 @@ except ImportError:
 
 
 @needs.faiss
-def test_euclidean(
+@pytest.mark.parametrize(
+    ("metric", "scipy_metric"),
+    [
+        ("cosine", "cosine"),
+        ("l1", "cityblock"),
+        ("cityblock", "cityblock"),
+        ("manhattan", "cityblock"),
+        ("l2", "euclidean"),
+        ("euclidean", "euclidean"),
+        ("sqeuclidean", "sqeuclidean"),
+        ("canberra", "canberra"),
+        ("braycurtis", "braycurtis"),
+        ("jensenshannon", "jensenshannon"),
+    ],
+)
+def test_metrics(
     random_small: NDArray[np.float64],
-    random_small_pdists: Mapping[str, NDArray[np.float64]],
+    metric: str,
+    scipy_metric: Literal[
+        "cosine",
+        "cityblock",
+        "euclidean",
+        "sqeuclidean",
+        "canberra",
+        "braycurtis",
+        "jensenshannon",
+    ],
 ) -> None:
-    trans = FAISSTransformer(metric="euclidean")
-    mat = trans.fit_transform(random_small)
-    euclidean_dist = random_small_pdists["euclidean"]
-    assert_row_close(mat, euclidean_dist)
+    # probability vectors, so that jensenshannon is defined
+    x = np.abs(random_small)
+    x /= x.sum(axis=1, keepdims=True)
+    pdists = cdist(x, x, scipy_metric)
 
-
-@needs.faiss
-def test_cosine(
-    random_small: NDArray[np.float64],
-    random_small_pdists: Mapping[str, NDArray[np.float64]],
-) -> None:
-    trans = FAISSTransformer(metric="cosine")
-    mat = trans.fit_transform(random_small)
-    cosine_dist = random_small_pdists["cosine"]
-    assert_row_close(mat, cosine_dist)
+    mat = FAISSTransformer(n_neighbors=5, metric=metric).fit_transform(x).tocoo()
+    # correct distances, and the exact nearest neighbors
+    np.testing.assert_allclose(mat.data, pdists[mat.row, mat.col], atol=1e-4)
+    np.testing.assert_allclose(
+        mat.data.reshape(len(x), 6), np.sort(pdists, axis=1)[:, :6], atol=1e-4
+    )

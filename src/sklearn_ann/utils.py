@@ -1,16 +1,30 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
 
 import numpy as np
-from scipy.sparse import csr_matrix
+from scipy.sparse import csr_array
 from sklearn.utils.validation import validate_data
 
 if TYPE_CHECKING:
     from collections.abc import Container, Iterator
     from typing import TypeVar
 
+    from numpy.typing import NDArray
+
     T = TypeVar("T")
+
+
+class MetricInfo[M](NamedTuple):
+    """An index's metric ``M``, and how to make its results distances.
+
+    See :func:`knn_csr` for ``negate`` and ``sqrt``.
+    """
+
+    metric: M
+    normalize: bool = False
+    negate: bool = False
+    sqrt: bool = False
 
 
 def check_metric(metric: str, metrics: Container[str]) -> None:
@@ -18,13 +32,13 @@ def check_metric(metric: str, metrics: Container[str]) -> None:
         raise ValueError(f"Unknown metric {metric!r}. Valid metrics are {metrics!r}")
 
 
-def get_sparse_row(mat: csr_matrix, idx: int) -> Iterator[tuple[int, float]]:
+def get_sparse_row(mat: csr_array, idx: int) -> Iterator[tuple[int, float]]:
     start_idx = mat.indptr[idx]
     end_idx = mat.indptr[idx + 1]
     return zip(mat.indices[start_idx:end_idx], mat.data[start_idx:end_idx])
 
 
-def trunc_csr(csr: csr_matrix, k: int) -> csr_matrix:
+def trunc_csr(csr: csr_array, k: int) -> csr_array:
     indptr = np.empty_like(csr.indptr)
     num_rows = len(csr.indptr) - 1
     indices = [np.empty(0, dtype=csr.indices.dtype)] * num_rows
@@ -40,10 +54,10 @@ def trunc_csr(csr: csr_matrix, k: int) -> csr_matrix:
         ptr_inc = min(k, old_end_idx - start_idx)
         cur_indptr = cur_indptr + ptr_inc
     indptr[-1] = cur_indptr
-    return csr_matrix((np.concatenate(data), np.concatenate(indices), indptr))
+    return csr_array((np.concatenate(data), np.concatenate(indices), indptr))
 
 
-def or_else_csrs(csr1: csr_matrix, csr2: csr_matrix) -> csr_matrix:
+def or_else_csrs(csr1: csr_array, csr2: csr_array) -> csr_array:
     # Possible TODO: Could use numba/Cython to speed this up?
     if csr1.shape != csr2.shape:
         raise ValueError("csr1 and csr2 must be the same shape")
@@ -74,12 +88,59 @@ def or_else_csrs(csr1: csr_matrix, csr2: csr_matrix) -> csr_matrix:
             indices.append(cur_index)
             data.append(cur_datum)
     indptr[-1] = len(indices)
-    return csr_matrix((data, indices, indptr), shape=csr1.shape)
+    return csr_array((data, indices, indptr), shape=csr1.shape)
+
+
+def knn_csr(
+    ids: NDArray[np.integer],
+    dist: NDArray[np.floating],
+    n_cols: int,
+    *,
+    negate: bool = False,
+    sqrt: bool = False,
+    self_rows: bool = False,
+    is_distance: bool = True,
+) -> csr_array:
+    """Build a kNN graph from each row's neighbor ``ids`` and distances ``dist``.
+
+    Distances become ``1 - dist`` with ``negate`` (similarities),
+    are clipped to be non-negative (float error),
+    and become ``sqrt(dist)`` with ``sqrt``.
+    Neighbors with id ``-1`` (not found by the index) are dropped.
+
+    With ``self_rows``, row ``i`` was queried with fitted row ``i``:
+    it becomes the row's first neighbor with distance exactly 0
+    (replacing the furthest neighbor if the index missed it, dropping it if repeated),
+    as :class:`~sklearn.neighbors.KNeighborsTransformer`'s ``fit_transform`` does.
+
+    ``is_distance=False`` is for metrics that aren't distances (e.g. similarities):
+    then ``dist`` stays as it is, there's no clipping and no ``self_rows``.
+    """
+    if negate:
+        dist = 1 - dist
+    if is_distance:
+        dist = np.maximum(dist, 0)
+    if sqrt:
+        dist = np.sqrt(dist)
+    if self_rows and is_distance:
+        rows = np.arange(len(ids))[:, None]
+        own = ids == rows
+        ids = ids.copy()
+        ids[own & (np.cumsum(own, axis=1) > 1)] = -1  # no duplicate self entries
+        missing = ~own.any(axis=1)
+        ids[missing, -1] = rows[missing, 0]
+        order = np.argsort(ids != rows, axis=1, kind="stable")
+        ids = np.take_along_axis(ids, order, axis=1)
+        dist = np.take_along_axis(dist, order, axis=1)
+        dist[:, 0] = 0
+    valid = ids >= 0
+    indptr = np.concatenate([[0], np.cumsum(valid.sum(axis=1))])
+    return csr_array((dist[valid], ids[valid], indptr), shape=(len(ids), n_cols))
 
 
 def postprocess_knn_csr(
-    knns: csr_matrix, *, include_fwd: bool = True, include_rev: bool = False
-) -> csr_matrix:
+    knns: csr_array, *, include_fwd: bool = True, include_rev: bool = False
+) -> csr_array:
     if not include_fwd and not include_rev:
         raise ValueError("One of include_fwd or include_rev must be True")
     elif include_rev and not include_fwd:

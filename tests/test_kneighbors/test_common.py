@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from importlib.util import find_spec
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pytest
@@ -104,53 +104,21 @@ def test_all_estimators(estim_cls: type[Estimator]) -> None:
 #   (or k+1, as explained in the following note).
 
 
-def mark_diagonal_0_xfail(est: ParameterSet) -> ParameterSet:
-    """Mark flaky tests as xfail(strict=False)."""
-    # Should probably postprocess these...
-    reasons = {
-        AnnoyTransformer: "sometimes omits points from their own neighborhood",
-        PyNNDescentTransformer: "sometimes doesn't return diagonal==0",
-        FAISSTransformer: "sometimes returns diagonal==eps where eps is small",
-    }
-    [val] = cast("tuple[type[Estimator]]", est.values)
-    if reason := reasons.get(val):
-        return add_mark(
-            est, pytest.mark.xfail(reason=f"{val.__name__} {reason}", strict=False)
-        )
-    return est
-
-
-@pytest.mark.parametrize(
-    "estim_cls", [mark_diagonal_0_xfail(est) for est in ESTIMATORS]
-)
-def test_all_return_diagonal_0(
+@pytest.mark.parametrize("estim_cls", ESTIMATORS)
+def test_all_follow_knn_spec(
     random_small: NDArray[np.float64], estim_cls: type[Estimator]
 ) -> None:
-    # * only explicitly store nearest neighborhoods of each sample with respect to the
-    #   training data. This should include those at 0 distance from a query point,
-    #   including the matrix diagonal when computing the nearest neighborhoods
-    #   between the training data and itself.
-
-    # Check: do we alway get an "extra" neighbour (diagonal/self)
-    est = estim_cls(n_neighbors=3)
-    knns = est.fit_transform(random_small)
+    knns = estim_cls(n_neighbors=3).fit_transform(random_small)
+    # an "extra" neighbor: the row itself
     assert (np.diff(knns.indptr) == 4).all()
-
-    # Check: diagonal is 0
-    next_expected_diagonal = 0
-    for row_idx in range(knns.shape[0]):
-        start_idx = knns.indptr[row_idx]
-        end_idx = knns.indptr[row_idx + 1]
-        for col_idx, val in zip(
-            knns.indices[start_idx:end_idx], knns.data[start_idx:end_idx]
-        ):
-            print("self0", row_idx, start_idx, end_idx, col_idx, val)
-            if row_idx != col_idx:
-                continue
-            assert col_idx == next_expected_diagonal
-            assert val == 0
-            next_expected_diagonal += 1
-    assert next_expected_diagonal == len(random_small)
+    # it is the first neighbor and at distance 0
+    first = knns.indptr[:-1]
+    np.testing.assert_array_equal(knns.indices[first], np.arange(knns.shape[0]))
+    np.testing.assert_array_equal(knns.data[first], 0)
+    assert (knns.data >= 0).all()
+    for start, end in zip(knns.indptr[:-1], knns.indptr[1:]):
+        assert len(set(knns.indices[start:end])) == end - start, "duplicate indices"
+        assert (np.diff(knns.data[start:end]) >= 0).all(), "unsorted distances"
 
 
 @pytest.mark.parametrize("estim_cls", ESTIMATORS)

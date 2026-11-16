@@ -4,8 +4,6 @@ from enum import Enum
 from importlib.util import find_spec
 from typing import TYPE_CHECKING, overload
 
-from scipy.sparse import csr_matrix
-
 if TYPE_CHECKING:
     from collections.abc import Callable
     from typing import TypeVar
@@ -13,20 +11,20 @@ if TYPE_CHECKING:
     import numpy as np
     import pytest
     from numpy.typing import NDArray
+    from scipy.sparse import csr_array
 
     Markable = TypeVar("Markable", bound=Callable[..., object] | type)
 
 
 def assert_row_close(
-    sp_mat: csr_matrix,
+    sp_mat: csr_array,
     actual_pdist: NDArray[np.float64],
     row: int = 42,
     thresh: float = 0.01,
 ) -> None:
-    row_mat = sp_mat.getrow(row)
-    assert isinstance(row_mat, csr_matrix)
-    for col, val in zip(row_mat.indices, row_mat.data):
-        assert abs(actual_pdist[row, col] - val) < thresh
+    row_vec = sp_mat[row]
+    [cols] = row_vec.coords
+    assert (abs(actual_pdist[row, cols] - row_vec.data) < thresh).all()
 
 
 class needs(Enum):

@@ -1,36 +1,34 @@
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING, NamedTuple, cast
+from typing import TYPE_CHECKING, cast
 
 import faiss
 import numpy as np
 from faiss import normalize_L2
 from joblib import cpu_count
-from scipy.sparse import csr_matrix
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils import Tags, TargetTags, TransformerTags
 from sklearn.utils.validation import validate_data
 
-from ..utils import TransformerChecksMixin, postprocess_knn_csr
+from ..utils import (
+    MetricInfo,
+    TransformerChecksMixin,
+    knn_csr,
+    postprocess_knn_csr,
+)
 
 if TYPE_CHECKING:
     from typing import Self
 
     from numpy.typing import ArrayLike, NDArray
-
-
-class MetricInfo(NamedTuple):
-    metric: int
-    normalize: bool = False
-    negate: bool = False
-    sqrt: bool = False
+    from scipy.sparse import csr_array
 
 
 L2_INFO = MetricInfo(faiss.METRIC_L2, sqrt=True)
 
 
-METRIC_MAP: dict[str, MetricInfo] = {
+METRIC_MAP: dict[str, MetricInfo[int]] = {
     "cosine": MetricInfo(faiss.METRIC_INNER_PRODUCT, normalize=True, negate=True),
     "l1": MetricInfo(faiss.METRIC_L1),
     "cityblock": MetricInfo(faiss.METRIC_L1),
@@ -40,7 +38,8 @@ METRIC_MAP: dict[str, MetricInfo] = {
     "sqeuclidean": MetricInfo(faiss.METRIC_L2),
     "canberra": MetricInfo(faiss.METRIC_Canberra),
     "braycurtis": MetricInfo(faiss.METRIC_BrayCurtis),
-    "jensenshannon": MetricInfo(faiss.METRIC_JensenShannon),
+    # FAISS returns the divergence, the distance is its square root
+    "jensenshannon": MetricInfo(faiss.METRIC_JensenShannon, sqrt=True),
 }
 
 
@@ -53,10 +52,7 @@ def mk_faiss_index(
     size, dim = feats.shape
     index: faiss.Index
     if not index_key:
-        if inner_metric == faiss.METRIC_INNER_PRODUCT:
-            index = faiss.IndexFlatIP(dim)
-        else:
-            index = faiss.IndexFlatL2(dim)
+        index = faiss.IndexFlat(dim, inner_metric)
     else:
         if index_key.find("HNSW") < 0:
             raise NotImplementedError(
@@ -95,7 +91,7 @@ class FAISSTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator):
         self.include_rev = include_rev
 
     @property
-    def _metric_info(self) -> MetricInfo:
+    def _metric_info(self) -> MetricInfo[int]:
         return METRIC_MAP[self.metric]
 
     def fit(self, X: ArrayLike, y: None = None) -> Self:
@@ -117,7 +113,7 @@ class FAISSTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator):
         )
         return self
 
-    def transform(self, X: NDArray[np.number]) -> csr_matrix:
+    def transform(self, X: NDArray[np.number]) -> csr_array:
         normalize = self._metric_info.normalize
         X = cast(
             "NDArray[np.float32]",
@@ -127,8 +123,7 @@ class FAISSTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator):
             normalize_L2(X)
         return self._transform(X)
 
-    def _transform(self, X: NDArray[np.float32] | None) -> csr_matrix:
-        n_samples_transform = self.n_samples_fit_ if X is None else X.shape[0]
+    def _transform(self, X: NDArray[np.float32] | None) -> csr_array:
         n_neighbors = self.n_neighbors + 1
         if X is None:
             # only flat indices store their vectors, i.e. `index_key` has to be empty
@@ -144,41 +139,19 @@ class FAISSTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator):
             )
         else:
             sims, nbrs = self.faiss_.search(X, k=n_neighbors)
-        dist_arr = np.array(sims, dtype=np.float32)
-        if self._metric_info.sqrt:
-            dist_arr = np.sqrt(dist_arr)
-        if self._metric_info.negate:
-            dist_arr = 1 - dist_arr
-        del sims
-        nbr_arr = np.array(nbrs, dtype=np.int32)
-        del nbrs
-        indptr = np.arange(0, n_samples_transform * n_neighbors + 1, n_neighbors)
-        """
-        dist_arr = np.concatenate(
-            [
-                np.zeros(
-                    (n_samples_transform, 1),
-                    dtype=dist_arr.dtype
-                ),
-                dist_arr
-            ], axis=1
-        )
-        nbr_arr = np.concatenate(
-            [
-                np.arange(n_samples_transform)[:, np.newaxis],
-                nbr_arr
-            ], axis=1
-        )
-        """
-        mat = csr_matrix(
-            (dist_arr.ravel(), nbr_arr.ravel(), indptr),
-            shape=(n_samples_transform, self.n_samples_fit_),
+        mat = knn_csr(
+            nbrs,
+            sims,
+            self.n_samples_fit_,
+            negate=self._metric_info.negate,
+            sqrt=self._metric_info.sqrt,
+            self_rows=X is None,
         )
         return postprocess_knn_csr(
             mat, include_fwd=self.include_fwd, include_rev=self.include_rev
         )
 
-    def fit_transform(self, X: ArrayLike, y: None = None) -> csr_matrix:  # type: ignore[override]
+    def fit_transform(self, X: ArrayLike, y: None = None) -> csr_array:  # type: ignore[override]
         return self.fit(X, y=y)._transform(X=None)
 
     def __sklearn_tags__(self) -> Tags:

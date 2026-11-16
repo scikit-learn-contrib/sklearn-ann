@@ -10,7 +10,7 @@ jobs:
   test:
     strategy:
       matrix:
-        python-version: ["3.10", "3.14"]
+        python-version: ["3.13", "3.14"]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
@@ -32,6 +32,10 @@ jobs:
 
   types:
     runs-on: ubuntu-latest
+    env:
+      # same Python as `hatch-check-types`, so hatch doesn’t install its own,
+      # whose clang can’t build nmslib (no libomp)
+      UV_PYTHON: "3.13"
     steps:
       - *clone
       - *uv

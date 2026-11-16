@@ -4,6 +4,7 @@ from collections import deque
 from typing import TYPE_CHECKING, cast
 
 import numpy as np
+from scipy.sparse import csr_array
 from sklearn.base import BaseEstimator, ClusterMixin
 from sklearn.neighbors import KNeighborsTransformer
 from sklearn.utils.validation import validate_data
@@ -51,7 +52,7 @@ def join(
 
 
 def neighborhood(
-    is_core: NDArray[np.bool_], knns: csr_matrix, rev_knns: csr_matrix, idx: int
+    is_core: NDArray[np.bool_], knns: csr_array, rev_knns: csr_array, idx: int
 ) -> Iterator[tuple[int, float]]:
     # TODO: Make this inner bit faster
     knn_it = get_sparse_row(knns, idx)
@@ -69,8 +70,8 @@ def neighborhood(
 
 def rnn_dbscan_inner(
     is_core: NDArray[np.bool_],
-    knns: csr_matrix,
-    rev_knns: csr_matrix,
+    knns: csr_array,
+    rev_knns: csr_array,
     labels: NDArray[np.int32],
 ) -> list[float]:
     cluster = 0
@@ -170,13 +171,15 @@ class RnnDBSCAN(ClusterMixin, BaseEstimator):
         self.n_jobs = n_jobs
         self.keep_knns = keep_knns
 
-    def fit(self, X: NDArray[np.float64] | csr_matrix, y: None = None) -> Self:
+    def fit(
+        self, X: NDArray[np.float64] | csr_array | csr_matrix, y: None = None
+    ) -> Self:
         X = validate_data(self, X, accept_sparse="csr")
         if self.input_guarantee == "none":
             algorithm = KNeighborsTransformer(n_neighbors=self.n_neighbors)
-            knns = cast("csr_matrix", algorithm.fit_transform(X))
+            knns = csr_array(algorithm.fit_transform(X))
         elif self.input_guarantee == "kneighbors":
-            knns = cast("csr_matrix", X)
+            knns = csr_array(X)
         else:
             raise ValueError(
                 "Expected input_guarantee to be one of 'none', 'kneighbors'"
@@ -202,7 +205,7 @@ class RnnDBSCAN(ClusterMixin, BaseEstimator):
         return self
 
     def fit_predict(  # type: ignore[override]
-        self, X: NDArray[np.float64] | csr_matrix, y: None = None
+        self, X: NDArray[np.float64] | csr_array | csr_matrix, y: None = None
     ) -> NDArray[np.int32]:
         self.fit(X, y=y)
         return self.labels_
