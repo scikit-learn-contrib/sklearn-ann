@@ -152,6 +152,7 @@ class FAISSTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator):
         )
 
     def fit_transform(self, X: ArrayLike, y: None = None) -> csr_array:  # type: ignore[override]
+        """Fit to `X` and return its kNN graph."""
         return self.fit(X, y=y)._transform(X=None)
 
     def __sklearn_tags__(self) -> Tags:

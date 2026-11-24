@@ -41,11 +41,10 @@ annlibs = [
 docs = [
     "sphinx>=7",
     "sphinx-gallery>=0.8.2",
-    "sphinx-book-theme>=1.1.0",
+    "scverse-doc[full]>=0.5.2",
     "sphinx-issues>=1.2.0",
     "numpydoc>=1.1.0",
     "matplotlib>=3.10",
-    "scanpydoc",
 ]
 tests = [
     "pytest>=6.2.1",
@@ -111,7 +110,7 @@ scripts.clean = "git clean -fdX -- {args:docs}"
 [tool.hatch.envs.hatch-check-types]
 python = "3.13"
 features = ["annlibs"]
-dependency-groups = ["tests", "typing"]
+dependency-groups = ["docs", "tests", "typing"]
 scripts.check = "mypy {args:.}"
 
 [tool.hatch.envs.hatch-test]
@@ -141,6 +140,11 @@ no_implicit_reexport = false
 [[tool.mypy.overrides]]
 # nmslib is a compiled extension module without stubs
 module = ["nmslib"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# docs-only dependency, not installed in the typing environment
+module = ["scverse_doc.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]

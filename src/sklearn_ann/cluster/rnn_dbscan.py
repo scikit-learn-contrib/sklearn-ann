@@ -133,7 +133,7 @@ class RnnDBSCAN(ClusterMixin, BaseEstimator):
         The number of neighbors in the kNN-graph (the k in kNN), and the
         theshold of reverse nearest neighbors for a node to be considered a
         core node.
-    input_guarantee : "none" | "kneighbors"
+    input_guarantee : Literal["none", "kneighbors"]
         A guarantee on input matrices. If equal to "kneighbors", the algorithm
         will assume you are passing in the kNN graph exactly as required, e.g.
         with n_neighbors. This can be used to pass in a graph produced by one
@@ -207,6 +207,7 @@ class RnnDBSCAN(ClusterMixin, BaseEstimator):
     def fit_predict(  # type: ignore[override]
         self, X: NDArray[np.float64] | csr_array | csr_matrix, y: None = None
     ) -> NDArray[np.int32]:
+        """Fit to `X` and return the cluster labels (`labels_`)."""
         self.fit(X, y=y)
         return self.labels_
 

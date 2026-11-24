@@ -60,6 +60,7 @@ class NMSlibTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator)
         return self._transform(X)
 
     def fit_transform(self, X: ArrayLike, y: None = None) -> csr_array:  # type: ignore[override]
+        """Fit to `X` and return its kNN graph."""
         X = cast("NDArray[np.float64]", validate_data(self, X))
         return self.fit(X)._transform(X, self_rows=True)
 
