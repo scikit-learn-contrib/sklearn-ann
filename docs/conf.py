@@ -5,8 +5,7 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 from __future__ import annotations
 
-import os
-from pathlib import PurePosixPath
+from scverse_doc.registry import intersphinx
 
 # -- Path setup --------------------------------------------------------------
 
@@ -26,43 +25,28 @@ author = "Frankie Robertson"
 
 # -- General configuration ---------------------------------------------------
 
-# Add any Sphinx extension module names here, as strings. They can be
-# extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
-# ones.
 extensions = [
-    "sphinx.ext.autodoc",
-    "sphinx.ext.autosummary",
-    "sphinx.ext.napoleon",
-    "scanpydoc.definition_list_typed_field",
-    "scanpydoc.rtd_github_links",
+    "scverse_doc",
     "sphinx_issues",
     "sphinx.ext.linkcode",
 ]
-
-# Add any paths that contain templates here, relative to this directory.
+source_repository = "https://github.com/scikit-learn-contrib/sklearn-ann"
 templates_path = ["_templates"]
 
-# List of patterns, relative to source directory, that match files and
-# directories to ignore when looking for source files.
-# This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+intersphinx_mapping = intersphinx() | {
+    "sklearn": ("https://scikit-learn.org/stable/", None),
+}
+xref_overrides = {
+    "numpy._typing._array_like.ArrayLike": ("py:data", "numpy.typing.ArrayLike"),
+    "numpy._typing._array_like.NDArray": ("py:data", "numpy.typing.NDArray"),
+    **{
+        f"numpy.{t}": ("py:attr", f"numpy.{t}") for t in ["float32", "float64", "int32"]
+    },
+}
+# faiss’ docs have no Python API inventory
+nitpick_ignore = [("py:class", "faiss.Index")]
 
-autosummary_generate = True
 autodoc_default_options = {
     "undoc-members": True,
 }
-
-
-# -- Options for HTML output -------------------------------------------------
-
-# The theme to use for HTML and HTML Help pages.  See the documentation for
-# a list of builtin themes.
-#
-html_theme = "sphinx_book_theme"
-html_theme_options = dict(
-    repository_url="https://github.com/frankier/sklearn-ann",
-    repository_branch=os.environ.get("READTHEDOCS_GIT_IDENTIFIER", "main"),
-)
-rtd_links_prefix = PurePosixPath("src")
-
 autodoc_mock_imports = ["annoy", "faiss", "mlxvs", "pynndescent", "nmslib"]

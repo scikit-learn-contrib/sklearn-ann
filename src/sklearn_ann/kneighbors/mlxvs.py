@@ -130,6 +130,7 @@ class MLXVSTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator):
         return self._to_csr(np.asarray(ids), np.asarray(dist))
 
     def fit_transform(self, X: ArrayLike, y: None = None) -> csr_array:  # type: ignore[override]
+        """Fit to `X` and return its kNN graph."""
         self.fit(X)
         n = self.n_samples_fit_
         k = min(self.n_neighbors + 1, n)
