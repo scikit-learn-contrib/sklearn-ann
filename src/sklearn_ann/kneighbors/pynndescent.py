@@ -26,6 +26,7 @@ class PyNNDescentTransformer(PyNNDescentTransformerBase):
         return csr_array(PyNNDescentTransformerBase.transform(self, X))
 
     def fit_transform(self, X: ArrayLike, y: None = None) -> csr_array:  # type: ignore[override]
+        """Fit to `X` and return its kNN graph."""
         self.fit(X, compress_index=False)
         ids, dist = self.index_.neighbor_graph
         return knn_csr(

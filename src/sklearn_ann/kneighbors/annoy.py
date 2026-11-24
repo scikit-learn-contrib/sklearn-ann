@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Literal, cast
 
 import annoy
 import numpy as np
@@ -11,14 +11,15 @@ from sklearn.utils.validation import validate_data
 from ..utils import TransformerChecksMixin, knn_csr
 
 if TYPE_CHECKING:
-    from typing import Literal, Self
+    from typing import Self
 
     from numpy.typing import ArrayLike, NDArray
     from scipy.sparse import csr_array
 
-    type Metric = Literal[
-        "angular", "euclidean", "manhattan", "hamming", "dot", "sqeuclidean"
-    ]
+#: The metrics :class:`AnnoyTransformer` supports.
+type Metric = Literal[
+    "angular", "euclidean", "manhattan", "hamming", "dot", "sqeuclidean"
+]
 
 
 class AnnoyTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator):
@@ -52,6 +53,7 @@ class AnnoyTransformer(TransformerChecksMixin, TransformerMixin, BaseEstimator):
         return self._transform(X)
 
     def fit_transform(self, X: ArrayLike, y: None = None) -> csr_array:  # type: ignore[override]
+        """Fit to `X` and return its kNN graph."""
         return self.fit(X)._transform(X=None)
 
     def _transform(self, X: NDArray[np.float64] | None) -> csr_array:
